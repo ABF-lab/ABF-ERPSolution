@@ -1,4 +1,38 @@
-import { sql } from "@vercel/postgres";
+import { createPool } from "@vercel/postgres";
+
+/**
+ * Resolve the Postgres connection string from whatever env var Vercel injected.
+ * Vercel's classic Postgres uses POSTGRES_URL, but the newer Neon-marketplace
+ * integration may inject DATABASE_URL or NEON_DATABASE_URL instead.
+ */
+function getConnectionString(): string {
+  const candidates = [
+    "POSTGRES_URL",
+    "POSTGRES_PRISMA_URL",
+    "POSTGRES_URL_NON_POOLING",
+    "DATABASE_URL",
+    "NEON_DATABASE_URL",
+  ];
+  for (const name of candidates) {
+    const v = process.env[name];
+    if (v && v.length > 0) return v;
+  }
+  throw new Error(
+    `No Postgres connection string found. Set one of: ${candidates.join(", ")} ` +
+    "in Vercel → Settings → Environment Variables (or connect a Vercel Storage database to this project)."
+  );
+}
+
+let _pool: ReturnType<typeof createPool> | null = null;
+function pool() {
+  if (_pool) return _pool;
+  _pool = createPool({ connectionString: getConnectionString() });
+  return _pool;
+}
+
+// Tagged-template wrapper so the rest of this file reads identically to `sql\`...\``
+const sql = ((strings: TemplateStringsArray, ...values: unknown[]) =>
+  pool().sql(strings, ...values)) as ReturnType<typeof createPool>["sql"];
 
 export interface DonationRow {
   id: number;
