@@ -1,0 +1,110 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+export const prerender = false;
+---
+
+<BaseLayout title="Donations · Admin — ABF" description="Donation log" hideImpactStrip={true}>
+  <section class="container-x py-10 sm:py-14">
+    <div class="flex flex-wrap items-end justify-between gap-3 mb-6">
+      <div>
+        <span class="chip-red">Admin</span>
+        <h1 class="font-display text-3xl sm:text-4xl mt-3">Donations</h1>
+        <p class="mt-1 text-sm text-brand-ink/60">Live from the Google Sheet via webhook</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <span id="totals" class="text-sm font-semibold text-brand-ink/70">Loading…</span>
+        <button id="refreshBtn" class="btn-secondary text-sm">Refresh</button>
+      </div>
+    </div>
+
+    <div id="loading" class="rounded-2xl bg-brand-cream p-8 text-center text-brand-ink/60">Loading donations…</div>
+    <div id="error" class="hidden rounded-2xl bg-brand-red/10 text-brand-red p-6 text-sm font-semibold"></div>
+
+    <div id="tableWrap" class="hidden rounded-2xl bg-white ring-1 ring-brand-ink/10 shadow-card overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-brand-ink text-white text-left">
+            <tr>
+              <th class="px-3 py-3 font-semibold whitespace-nowrap">Date</th>
+              <th class="px-3 py-3 font-semibold">Receipt #</th>
+              <th class="px-3 py-3 font-semibold text-right whitespace-nowrap">Amount</th>
+              <th class="px-3 py-3 font-semibold">Donor</th>
+              <th class="px-3 py-3 font-semibold">Email</th>
+              <th class="px-3 py-3 font-semibold">PAN</th>
+              <th class="px-3 py-3 font-semibold">Payment ID</th>
+            </tr>
+          </thead>
+          <tbody id="tbody" class="divide-y divide-brand-ink/5"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    interface Row {
+      receiptNumber: string;
+      paymentId: string;
+      orderId: string;
+      amountInr: number;
+      donorName: string;
+      donorEmail: string;
+      donorPhone?: string;
+      donorPan?: string;
+      donatedAt: string;
+    }
+
+    const $ = (id: string) => document.getElementById(id)!;
+    const fmtINR = (n: number) => `₹ ${n.toLocaleString("en-IN")}`;
+    const fmtDate = (iso: string) => {
+      try {
+        return new Date(iso).toLocaleString("en-IN", {
+          day: "2-digit", month: "short", year: "numeric",
+          hour: "2-digit", minute: "2-digit",
+        });
+      } catch { return iso; }
+    };
+    const escapeHtml = (s: string) =>
+      s.replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]!));
+
+    async function load() {
+      $("loading").classList.remove("hidden");
+      $("tableWrap").classList.add("hidden");
+      $("error").classList.add("hidden");
+      try {
+        const res = await fetch("/api/admin/donations", { cache: "no-store" });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || "Failed to load");
+        const rows: Row[] = data.donations || [];
+        rows.sort((a, b) => b.donatedAt.localeCompare(a.donatedAt));
+
+        const total = rows.reduce((s, r) => s + (Number(r.amountInr) || 0), 0);
+        $("totals").textContent = `${rows.length} donations · ${fmtINR(total)} total`;
+
+        $("tbody").innerHTML = rows.map((r) => `
+          <tr class="hover:bg-brand-cream/40">
+            <td class="px-3 py-2.5 whitespace-nowrap text-brand-ink/70">${fmtDate(r.donatedAt)}</td>
+            <td class="px-3 py-2.5 font-mono text-xs">${escapeHtml(r.receiptNumber)}</td>
+            <td class="px-3 py-2.5 text-right font-display whitespace-nowrap">${fmtINR(Number(r.amountInr) || 0)}</td>
+            <td class="px-3 py-2.5 font-semibold">${escapeHtml(r.donorName || "")}</td>
+            <td class="px-3 py-2.5 text-brand-ink/70 break-all">${escapeHtml(r.donorEmail || "")}</td>
+            <td class="px-3 py-2.5 font-mono text-xs">${escapeHtml(r.donorPan || "—")}</td>
+            <td class="px-3 py-2.5 font-mono text-xs"><a class="text-brand-red hover:underline" target="_blank" href="https://dashboard.razorpay.com/app/payments/${encodeURIComponent(r.paymentId)}">${escapeHtml(r.paymentId)}</a></td>
+          </tr>
+        `).join("") || `<tr><td colspan="7" class="px-3 py-8 text-center text-brand-ink/55">No donations yet.</td></tr>`;
+
+        $("loading").classList.add("hidden");
+        $("tableWrap").classList.remove("hidden");
+      } catch (err) {
+        $("loading").classList.add("hidden");
+        const msg = err instanceof Error ? err.message : "Failed to load";
+        const e = $("error");
+        e.textContent = `Error: ${msg}`;
+        e.classList.remove("hidden");
+      }
+    }
+
+    $("refreshBtn").addEventListener("click", load);
+    load();
+  </script>
+</BaseLayout>

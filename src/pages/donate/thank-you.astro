@@ -1,0 +1,65 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+export const prerender = true;
+
+const url = Astro.url;
+const receipt = url.searchParams.get("r") || "";
+const amount = url.searchParams.get("a") || "";
+---
+
+<BaseLayout
+  title="Thank you for your donation — Active Bengaluru Foundation"
+  description="Your donation has been received. 80G receipt is on its way to your inbox."
+>
+  <section class="bg-brand-yellow">
+    <div class="container-x py-16 sm:py-24 text-center">
+      <div class="inline-flex h-16 w-16 items-center justify-center rounded-full bg-brand-red text-white text-3xl mb-6">✓</div>
+      <h1 class="heading-display">Thank you. <span class="accent-red">You're part of the movement.</span></h1>
+      <p class="mt-5 max-w-xl mx-auto text-lg text-brand-ink/80 leading-relaxed">
+        Your donation has been received. Your <strong>80G receipt</strong> is on its way to your inbox right now (check spam if you don't see it within a couple of minutes).
+      </p>
+
+      {(receipt || amount) && (
+        <div class="mt-8 inline-flex flex-col sm:flex-row gap-3 sm:gap-6 bg-white rounded-2xl shadow-card px-6 py-4 ring-1 ring-brand-ink/10">
+          {amount && (
+            <div>
+              <div class="text-[10px] uppercase tracking-wider text-brand-ink/55 font-semibold">Amount</div>
+              <div class="font-display text-2xl">₹ {Number(amount).toLocaleString("en-IN")}</div>
+            </div>
+          )}
+          {receipt && (
+            <>
+              <div class="hidden sm:block w-px bg-brand-ink/10"></div>
+              <div>
+                <div class="text-[10px] uppercase tracking-wider text-brand-ink/55 font-semibold">Receipt #</div>
+                <div class="font-mono text-base sm:text-lg font-semibold mt-1">{receipt}</div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      <div class="mt-10 flex flex-wrap justify-center gap-3">
+        <a href="/" class="btn-primary">← Back to home</a>
+        <a href="/projects/active-health" class="btn-secondary">See your impact →</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="container-narrow py-16">
+    <div class="prose-abf">
+      <h2>What happens next?</h2>
+      <ol>
+        <li><strong>Receipt in your inbox</strong> — within 1–2 minutes. The PDF is your 80G certificate; keep it for your tax filing.</li>
+        <li><strong>Your money goes to work</strong> — within hours, not weeks. We deploy donations into the live programmes (Active Health helpline, equipment bank, etc.).</li>
+        <li><strong>You'll hear from us</strong> — when we ship a major update (the next "Active Updates" issue) we'll send a copy to your email so you can see what your contribution helped do.</li>
+      </ol>
+
+      <h2>Questions?</h2>
+      <p>
+        Email <a href="mailto:activebengaluru@gmail.com">activebengaluru@gmail.com</a> or call <strong>+91 93640 24365</strong> any time.
+      </p>
+    </div>
+  </section>
+</BaseLayout>

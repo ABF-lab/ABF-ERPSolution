@@ -1,0 +1,246 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+export const prerender = true;
+---
+
+<BaseLayout
+  title="Donate to Active Bengaluru Foundation"
+  description="Make a tax-deductible donation to ABF. 80G receipt emailed instantly. Secure payments via Razorpay — UPI, cards, net-banking accepted."
+>
+  <section class="bg-brand-yellow">
+    <div class="container-x py-12 sm:py-16">
+      <span class="chip-red">Donate</span>
+      <h1 class="mt-4 heading-display">Stand with the <span class="accent-red">movement</span>.</h1>
+      <p class="mt-5 max-w-2xl text-lg text-brand-ink/80 leading-relaxed">
+        Every rupee fuels a 24/7 helpline operator, refuels a water tanker, refurbishes an oxygen concentrator. Tax-deductible under 80G. Receipt emailed instantly.
+      </p>
+    </div>
+  </section>
+
+  <section class="container-x py-12 sm:py-16">
+    <div class="grid gap-8 lg:grid-cols-[1.4fr_1fr] items-start">
+      <!-- Form -->
+      <form id="donateForm" class="rounded-3xl bg-white shadow-card ring-1 ring-brand-ink/10 p-5 sm:p-8 space-y-6">
+        <!-- Amount -->
+        <div>
+          <label class="text-[11px] uppercase tracking-[0.18em] font-semibold text-brand-ink/60">Choose an amount</label>
+          <div class="mt-3 grid grid-cols-3 sm:grid-cols-5 gap-2">
+            {[500, 1000, 2500, 5000, 10000].map((amt) => (
+              <button type="button" data-preset={amt} class="amount-preset rounded-xl ring-1 ring-brand-ink/10 bg-brand-cream hover:bg-brand-yellow transition-colors py-3 font-display text-base sm:text-lg">
+                ₹{amt.toLocaleString("en-IN")}
+              </button>
+            ))}
+          </div>
+          <div class="mt-3 relative">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-brand-ink/55 font-display text-lg">₹</span>
+            <input
+              id="amountInput"
+              type="number"
+              min="100"
+              step="1"
+              placeholder="Or enter custom amount"
+              class="w-full pl-9 pr-4 py-3 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none font-display text-lg"
+              required
+            />
+          </div>
+          <p id="panNotice" class="hidden mt-2 text-xs text-brand-red font-semibold">⚠ PAN required for donations of ₹2,000 or more (per 80G regulations)</p>
+        </div>
+
+        <!-- Donor details -->
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-semibold text-brand-ink mb-1.5">Full name <span class="text-brand-red">*</span></label>
+            <input id="nameInput" type="text" required class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none" placeholder="As per PAN / official records" />
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-brand-ink mb-1.5">Email <span class="text-brand-red">*</span></label>
+            <input id="emailInput" type="email" required class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none" placeholder="receipt sent here" />
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-brand-ink mb-1.5">Phone</label>
+            <input id="phoneInput" type="tel" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none" placeholder="+91 …" />
+          </div>
+          <div id="panRow" class="sm:col-span-2 hidden">
+            <label class="block text-sm font-semibold text-brand-ink mb-1.5">PAN <span class="text-brand-red">*</span></label>
+            <input id="panInput" type="text" maxlength="10" pattern="[A-Za-z]{5}[0-9]{4}[A-Za-z]{1}" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none uppercase font-mono" placeholder="ABCDE1234F" />
+            <p class="mt-1 text-xs text-brand-ink/55">Required for 80G receipt on donations of ₹2,000+</p>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-semibold text-brand-ink mb-1.5">Address <span class="text-brand-ink/50 font-normal">(optional)</span></label>
+            <textarea id="addressInput" rows="2" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none resize-none" placeholder="Will appear on the 80G receipt"></textarea>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div>
+          <button id="submitBtn" type="submit" class="btn-primary w-full justify-center text-base font-semibold">
+            <span id="submitLabel">Donate now →</span>
+            <span id="submitSpinner" class="hidden">Processing…</span>
+          </button>
+          <p class="mt-3 text-[11px] text-brand-ink/55 text-center">
+            Secure payment via Razorpay · UPI, cards, net-banking accepted ·
+            80G receipt emailed instantly
+          </p>
+          <p id="errorMsg" class="hidden mt-3 text-sm text-brand-red font-semibold text-center"></p>
+        </div>
+      </form>
+
+      <!-- Sidebar: bank details -->
+      <aside class="rounded-3xl bg-brand-cream ring-1 ring-brand-ink/8 p-5 sm:p-6 space-y-5">
+        <div>
+          <span class="chip">Prefer direct transfer?</span>
+          <h3 class="font-display text-xl mt-3">Bank / UPI details</h3>
+          <p class="mt-2 text-sm text-brand-ink/70">For corporate CSR or donors who prefer NEFT/IMPS. Email <a href="mailto:activebengaluru@gmail.com" class="text-brand-red font-semibold">activebengaluru@gmail.com</a> after transfer to receive your receipt.</p>
+        </div>
+        <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+          <dt class="text-brand-ink/55">Account</dt><dd class="font-semibold [overflow-wrap:anywhere]">Active Bengaluru Foundation</dd>
+          <dt class="text-brand-ink/55">A/c No.</dt><dd class="font-mono">10176511090</dd>
+          <dt class="text-brand-ink/55">IFSC</dt><dd class="font-mono">IDFB0080168</dd>
+          <dt class="text-brand-ink/55">Bank</dt><dd>IDFC FIRST · Frazer Town</dd>
+          <dt class="text-brand-ink/55">UPI</dt><dd class="font-mono font-semibold [overflow-wrap:anywhere]">abf007.06@cmsidfc</dd>
+        </dl>
+        <div class="flex flex-col items-center pt-2">
+          <img src="/images/donate-qr.png" alt="UPI QR" class="w-32 h-32 rounded-xl ring-1 ring-brand-ink/10 p-1.5 bg-white" />
+          <span class="mt-1.5 text-[10px] uppercase tracking-wider text-brand-ink/55 font-semibold">Scan · UPI</span>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- Razorpay Checkout SDK -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js" is:inline></script>
+
+  <!-- Page logic -->
+  <script>
+    type CreateOrderResp =
+      | { ok: true; orderId: string; amountInr: number; keyId: string }
+      | { ok?: false; error: string };
+
+    type VerifyResp =
+      | { ok: true; receiptNumber: string; paymentId: string; amountInr: number; donorName: string; donorEmail: string }
+      | { ok?: false; error: string };
+
+    declare global { interface Window { Razorpay: any } }
+
+    const form = document.getElementById("donateForm") as HTMLFormElement;
+    const amountInput = document.getElementById("amountInput") as HTMLInputElement;
+    const nameInput = document.getElementById("nameInput") as HTMLInputElement;
+    const emailInput = document.getElementById("emailInput") as HTMLInputElement;
+    const phoneInput = document.getElementById("phoneInput") as HTMLInputElement;
+    const panInput = document.getElementById("panInput") as HTMLInputElement;
+    const addressInput = document.getElementById("addressInput") as HTMLTextAreaElement;
+    const panRow = document.getElementById("panRow")!;
+    const panNotice = document.getElementById("panNotice")!;
+    const submitBtn = document.getElementById("submitBtn") as HTMLButtonElement;
+    const submitLabel = document.getElementById("submitLabel")!;
+    const submitSpinner = document.getElementById("submitSpinner")!;
+    const errorMsg = document.getElementById("errorMsg")!;
+
+    function showError(msg: string) {
+      errorMsg.textContent = msg;
+      errorMsg.classList.remove("hidden");
+    }
+    function clearError() { errorMsg.classList.add("hidden"); errorMsg.textContent = ""; }
+    function setBusy(busy: boolean) {
+      submitBtn.disabled = busy;
+      submitLabel.classList.toggle("hidden", busy);
+      submitSpinner.classList.toggle("hidden", !busy);
+    }
+
+    document.querySelectorAll<HTMLButtonElement>(".amount-preset").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const v = btn.dataset.preset!;
+        amountInput.value = v;
+        amountInput.dispatchEvent(new Event("input", { bubbles: true }));
+        document.querySelectorAll(".amount-preset").forEach((b) => b.classList.remove("ring-2", "ring-brand-red"));
+        btn.classList.add("ring-2", "ring-brand-red");
+      });
+    });
+
+    amountInput.addEventListener("input", () => {
+      const amt = Number(amountInput.value);
+      const requirePan = amt >= 2000;
+      panRow.classList.toggle("hidden", !requirePan);
+      panNotice.classList.toggle("hidden", !requirePan);
+      panInput.required = requirePan;
+    });
+
+    panInput.addEventListener("input", () => {
+      panInput.value = panInput.value.toUpperCase();
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      clearError();
+
+      const amountInr = Number(amountInput.value);
+      const payload = {
+        amountInr,
+        donorName: nameInput.value.trim(),
+        donorEmail: emailInput.value.trim(),
+        donorPhone: phoneInput.value.trim(),
+        donorPan: panInput.value.trim().toUpperCase(),
+        donorAddress: addressInput.value.trim(),
+      };
+
+      setBusy(true);
+
+      try {
+        const orderRes = await fetch("/api/donate/create-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const order: CreateOrderResp = await orderRes.json();
+        if (!orderRes.ok || !("ok" in order) || !order.ok) {
+          throw new Error("error" in order ? order.error : "Could not create order");
+        }
+
+        const rzp = new window.Razorpay({
+          key: order.keyId,
+          amount: order.amountInr * 100,
+          currency: "INR",
+          name: "Active Bengaluru Foundation",
+          description: "Tax-deductible donation (80G)",
+          image: "/favicon-512.png",
+          order_id: order.orderId,
+          prefill: { name: payload.donorName, email: payload.donorEmail, contact: payload.donorPhone },
+          theme: { color: "#FFD23F" },
+          handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
+            try {
+              const verifyRes = await fetch("/api/donate/verify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(response),
+              });
+              const v: VerifyResp = await verifyRes.json();
+              if (!verifyRes.ok || !("ok" in v) || !v.ok) {
+                throw new Error("error" in v ? v.error : "Verification failed");
+              }
+              window.location.href =
+                `/donate/thank-you?r=${encodeURIComponent(v.receiptNumber)}&a=${v.amountInr}`;
+            } catch (err) {
+              setBusy(false);
+              showError(
+                "Payment received but receipt generation failed. We'll email you shortly. " +
+                "Reach us at activebengaluru@gmail.com if you don't get the receipt within 24 hours."
+              );
+            }
+          },
+          modal: {
+            ondismiss: () => setBusy(false),
+          },
+        });
+        rzp.on("payment.failed", (resp: { error: { description: string } }) => {
+          setBusy(false);
+          showError(resp.error?.description || "Payment failed");
+        });
+        rzp.open();
+      } catch (err) {
+        setBusy(false);
+        showError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+      }
+    });
+  </script>
+</BaseLayout>
