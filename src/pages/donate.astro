@@ -86,23 +86,42 @@ export const prerender = true;
         </div>
       </form>
 
-      <!-- Sidebar: bank details -->
+      <!-- Sidebar: trust panel -->
       <aside class="rounded-3xl bg-brand-cream ring-1 ring-brand-ink/8 p-5 sm:p-6 space-y-5">
         <div>
-          <span class="chip">Prefer direct transfer?</span>
-          <h3 class="font-display text-xl mt-3">Bank / UPI details</h3>
-          <p class="mt-2 text-sm text-brand-ink/70">For corporate CSR or donors who prefer NEFT/IMPS. Email <a href="mailto:activebengaluru@gmail.com" class="text-brand-red font-semibold">activebengaluru@gmail.com</a> after transfer to receive your receipt.</p>
+          <span class="chip">Why give to ABF</span>
+          <h3 class="font-display text-xl mt-3">Every rupee, accounted for.</h3>
         </div>
-        <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-          <dt class="text-brand-ink/55">Account</dt><dd class="font-semibold [overflow-wrap:anywhere]">Active Bengaluru Foundation</dd>
-          <dt class="text-brand-ink/55">A/c No.</dt><dd class="font-mono">10176511090</dd>
-          <dt class="text-brand-ink/55">IFSC</dt><dd class="font-mono">IDFB0080168</dd>
-          <dt class="text-brand-ink/55">Bank</dt><dd>IDFC FIRST · Frazer Town</dd>
-          <dt class="text-brand-ink/55">UPI</dt><dd class="font-mono font-semibold [overflow-wrap:anywhere]">abf007.06@cmsidfc</dd>
-        </dl>
-        <div class="flex flex-col items-center pt-2">
-          <img src="/images/donate-qr.png" alt="UPI QR" class="w-32 h-32 rounded-xl ring-1 ring-brand-ink/10 p-1.5 bg-white" />
-          <span class="mt-1.5 text-[10px] uppercase tracking-wider text-brand-ink/55 font-semibold">Scan · UPI</span>
+        <ul class="space-y-3 text-sm text-brand-ink/85">
+          <li class="flex gap-3">
+            <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-red/10 text-brand-red" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
+            </span>
+            <div><strong>Instant 80G receipt</strong> — emailed automatically with the PDF attached, ready to use when you file your taxes.</div>
+          </li>
+          <li class="flex gap-3">
+            <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-yellow-deep/20 text-brand-ink" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </span>
+            <div><strong>12A &amp; 80G certified.</strong> Section 8 NPO. Donations are fully tax-deductible.</div>
+          </li>
+          <li class="flex gap-3">
+            <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-yellow/40 text-brand-ink" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/></svg>
+            </span>
+            <div><strong>Direct to programs.</strong> Healthcare, water relief, education, drug de-addiction — all reach the families who need them.</div>
+          </li>
+          <li class="flex gap-3">
+            <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-ink/10 text-brand-ink" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </span>
+            <div><strong>Secure via Razorpay.</strong> PCI-DSS compliant. UPI, cards, net-banking, and wallets — all in one flow.</div>
+          </li>
+        </ul>
+        <div class="pt-3 border-t border-brand-ink/10 text-xs text-brand-ink/60 leading-relaxed">
+          Corporate CSR or large institutional donations? Email
+          <a href="mailto:activebengaluru@gmail.com" class="text-brand-red font-semibold">activebengaluru@gmail.com</a>
+          and we'll arrange the right path.
         </div>
       </aside>
     </div>
