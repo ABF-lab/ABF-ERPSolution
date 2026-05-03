@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { razorpayClient, verifyPaymentSignature } from "../../../lib/razorpay";
 import { generateReceiptPdf } from "../../../lib/receipt";
 import { sendDonorReceipt, sendFinanceNotification } from "../../../lib/email";
-import { appendDonation } from "../../../lib/sheets";
+import { insertDonation } from "../../../lib/db";
 
 export const prerender = false;
 
@@ -38,9 +38,9 @@ export const POST: APIRoute = async ({ request }) => {
       return json({ error: "Donor email missing from order" }, 500);
     }
 
-    // 1. Append to Google Sheet — this also assigns the receipt number
+    // 1. Insert into Postgres — atomically assigns the receipt number
     const donatedAt = new Date();
-    const sheetResult = await appendDonation({
+    const { receiptNumber } = await insertDonation({
       paymentId,
       orderId,
       amountInr,
@@ -49,9 +49,8 @@ export const POST: APIRoute = async ({ request }) => {
       donorPhone: donor.phone,
       donorPan: donor.pan,
       donorAddress: donor.address,
-      donatedAt: donatedAt.toISOString(),
+      donatedAt,
     });
-    const receiptNumber = sheetResult.receiptNumber;
 
     // 2. Generate receipt PDF
     const pdfBuffer = await generateReceiptPdf({
@@ -63,7 +62,7 @@ export const POST: APIRoute = async ({ request }) => {
     });
 
     // 3. Email donor + finance team in parallel
-    await Promise.allSettled([
+    const emailResults = await Promise.allSettled([
       sendDonorReceipt({
         donorName: donor.name,
         donorEmail: donor.email,
@@ -83,6 +82,13 @@ export const POST: APIRoute = async ({ request }) => {
         pdfBuffer,
       }),
     ]);
+
+    // Surface any email failures in logs (donation is still recorded; PDF is in DB)
+    emailResults.forEach((r, i) => {
+      if (r.status === "rejected") {
+        console.error(`[verify] email ${i === 0 ? "to donor" : "to finance"} failed:`, r.reason);
+      }
+    });
 
     return json({
       ok: true,

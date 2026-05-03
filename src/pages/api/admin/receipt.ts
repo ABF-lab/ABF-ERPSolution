@@ -1,13 +1,13 @@
 import type { APIRoute } from "astro";
 import { generateReceiptPdf } from "../../../lib/receipt";
-import { listDonations } from "../../../lib/sheets";
+import { findDonationByPaymentId } from "../../../lib/db";
 
 export const prerender = false;
 
 /**
  * Re-generate and download the 80G receipt PDF for a past donation.
- * Looks up the donation in the Google Sheet by paymentId, then regenerates
- * the same PDF (same receipt number, same data) that was originally emailed.
+ * Looks up the donation by paymentId, then regenerates the same PDF
+ * (same receipt number, same data) that was originally emailed.
  *
  * Use case: a donor lost their email and asks for a copy. Click the
  * "Download" link on /admin/donations next to their row.
@@ -22,18 +22,16 @@ export const GET: APIRoute = async ({ url }) => {
     return text("paymentId query param required", 400);
   }
 
-  let donations;
+  let row;
   try {
-    const data = await listDonations();
-    donations = data.donations;
+    row = await findDonationByPaymentId(paymentId);
   } catch (err) {
     return text(
-      `Could not load donations log: ${err instanceof Error ? err.message : "unknown error"}`,
+      `Could not load donation: ${err instanceof Error ? err.message : "unknown error"}`,
       500
     );
   }
 
-  const row = donations.find((d) => d.paymentId === paymentId);
   if (!row) {
     return text(`No donation found for paymentId=${paymentId}`, 404);
   }

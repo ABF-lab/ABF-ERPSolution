@@ -1,12 +1,12 @@
 import type { APIRoute } from "astro";
-import { listDonations } from "../../../lib/sheets";
+import { listDonations } from "../../../lib/db";
 
 export const prerender = false;
 
 export const GET: APIRoute = async () => {
   try {
-    const data = await listDonations();
-    return new Response(JSON.stringify(data), {
+    const donations = await listDonations();
+    return new Response(JSON.stringify({ ok: true, donations }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });

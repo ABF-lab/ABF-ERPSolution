@@ -20,7 +20,7 @@ Have these handy:
 
 - [ ] **Razorpay account** — sign up at https://razorpay.com (KYC verified — required for live payments)
 - [ ] **Resend account** — sign up at https://resend.com (free tier is fine to start)
-- [ ] **Google account** with permission to create Sheets and Apps Scripts
+- [ ] **Vercel project** with the `active-bengaluru` GitHub repo connected (you already have this)
 - [ ] **ABF legal info** for the 80G receipt:
   - PAN of Active Bengaluru Foundation
   - 12A registration number
@@ -67,141 +67,55 @@ Until your domain is verified, the FROM address will be `Active Bengaluru <onboa
 
 ---
 
-## 3. Google Sheet + Apps Script — donation log + receipt numbers
+## 3. Vercel Postgres — donation log + atomic receipt numbering
 
-This is the most fiddly part. The Sheet stores every donation row AND atomically assigns the next receipt number.
+Donations are stored in a Postgres database hosted on Vercel. Free tier gives you 256 MB / 60 hours of compute per month — more than enough for any NGO scale.
 
-### 3a. Create the Sheet
+### 3a. Create the database
 
-1. Go to https://sheets.google.com and create a new blank sheet
-2. Rename it: **ABF Donations Log**
-3. In **row 1**, paste these exact column headers:
+1. Vercel → your `active-bengaluru` project → **Storage** tab (top nav)
+2. Click **Create Database** (or **Connect Store** if you already have one)
+3. Choose **Postgres** (or "Neon Postgres" — same thing)
+4. Region: **Mumbai (bom1)** if available, otherwise **Singapore (sin1)** — close to your Vercel functions
+5. Database name: `abf-donations` (any name is fine)
+6. Click **Create**
+7. Vercel automatically adds these env vars to your project:
+   - `POSTGRES_URL`
+   - `POSTGRES_URL_NON_POOLING`
+   - `POSTGRES_USER`
+   - `POSTGRES_HOST`
+   - `POSTGRES_PASSWORD`
+   - `POSTGRES_DATABASE`
 
-```
-receiptNumber	donatedAt	donorName	donorEmail	donorPhone	donorPan	donorAddress	amountInr	paymentId	orderId
-```
+You don't need to copy/paste these anywhere — they're injected automatically.
 
-(Tabs between cells. Or just type each one in its column.)
+### 3b. Trigger the schema setup
 
-4. Freeze row 1: **View → Freeze → 1 row**
-5. Format column **H (amountInr)** as Currency → INR
+After Vercel finishes provisioning the database (~30 seconds) and your project redeploys (auto-triggered by the Storage connection):
 
-### 3b. Add the Apps Script
-
-1. In the same Sheet: **Extensions → Apps Script**
-2. Delete the placeholder code, paste the script below:
-
-```javascript
-// ABF Donations webhook — paste into Apps Script attached to the donations sheet.
-const SHEET_NAME = "Sheet1"; // rename if your sheet's tab is different
-const SHARED_TOKEN = "PUT_A_LONG_RANDOM_STRING_HERE"; // must match GOOGLE_SHEET_WEBHOOK_TOKEN env var
-
-function fiscalYearLabel(date) {
-  const y = date.getFullYear();
-  const m = date.getMonth(); // 0-indexed: April = 3
-  const startYear = m >= 3 ? y : y - 1;
-  return startYear + "-" + String(startYear + 1).slice(-2);
-}
-
-function getNextReceiptNumber(date) {
-  const fy = fiscalYearLabel(date);
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
-  const data = sheet.getDataRange().getValues();
-  let max = 0;
-  for (let i = 1; i < data.length; i++) {
-    const r = String(data[i][0] || "");
-    const m = r.match(new RegExp("^ABF/" + fy + "/(\\d+)$"));
-    if (m) max = Math.max(max, parseInt(m[1], 10));
-  }
-  const next = String(max + 1).padStart(4, "0");
-  return "ABF/" + fy + "/" + next;
-}
-
-function doPost(e) {
-  try {
-    const body = JSON.parse(e.postData.contents);
-    if (body.token !== SHARED_TOKEN) {
-      return ContentService.createTextOutput(JSON.stringify({ ok: false, error: "Unauthorized" }))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
-
-    if (body.action === "appendDonation") {
-      const p = body.payload;
-      const donatedAt = new Date(p.donatedAt);
-      const receiptNumber = getNextReceiptNumber(donatedAt);
-      sheet.appendRow([
-        receiptNumber,
-        donatedAt,
-        p.donorName,
-        p.donorEmail,
-        p.donorPhone || "",
-        p.donorPan || "",
-        p.donorAddress || "",
-        p.amountInr,
-        p.paymentId,
-        p.orderId,
-      ]);
-      return ContentService.createTextOutput(JSON.stringify({ ok: true, receiptNumber }))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-
-    if (body.action === "listDonations") {
-      const data = sheet.getDataRange().getValues();
-      const donations = [];
-      for (let i = 1; i < data.length; i++) {
-        const r = data[i];
-        if (!r[0]) continue;
-        donations.push({
-          receiptNumber: r[0],
-          donatedAt: r[1] instanceof Date ? r[1].toISOString() : String(r[1]),
-          donorName: r[2],
-          donorEmail: r[3],
-          donorPhone: r[4],
-          donorPan: r[5],
-          donorAddress: r[6],
-          amountInr: Number(r[7]) || 0,
-          paymentId: r[8],
-          orderId: r[9],
-        });
-      }
-      return ContentService.createTextOutput(JSON.stringify({ ok: true, donations }))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-
-    return ContentService.createTextOutput(JSON.stringify({ ok: false, error: "Unknown action" }))
-      .setMimeType(ContentService.MimeType.JSON);
-  } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({ ok: false, error: String(err) }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}
-```
-
-3. **Important**: replace `PUT_A_LONG_RANDOM_STRING_HERE` with a long random string. Generate one with:
-   ```bash
-   openssl rand -hex 32
+1. Visit `https://activebengaluru.org/api/admin/init-db` in your browser
+2. Login with your admin credentials when prompted (basic auth — username `admin`, password from your env var)
+3. You should see:
+   ```json
+   { "ok": true, "message": "Schema is up to date." }
    ```
-   Save the value — you'll need it as `GOOGLE_SHEET_WEBHOOK_TOKEN`.
+4. If you see an error, the database isn't connected yet — wait 1 more minute and refresh
 
-4. Click **Save** (💾 icon)
+This creates two tables:
+- `donations` — every donation row (atomic UNIQUE constraint on payment_id and receipt_number)
+- `receipt_counters` — one row per fiscal year, atomically incremented for each new receipt number
 
-### 3c. Deploy as a web app
+You only need to run this once. (Running it again is safe — it's idempotent.)
 
-1. Top right: **Deploy → New deployment**
-2. Click ⚙️ next to "Select type" → **Web app**
-3. Settings:
-   - Description: "ABF donations webhook v1"
-   - Execute as: **Me (your Google account)**
-   - Who has access: **Anyone** ⚠️ (yes, anyone — the shared token is what protects it)
-4. Click **Deploy**
-5. Authorize when prompted
-6. Copy the **Web app URL** (looks like `https://script.google.com/macros/s/AKfyc.../exec`)
+> **Why Postgres instead of Google Sheets?**
+> Google Apps Script web apps are notoriously unreliable for production webhooks (anonymous "Anyone" access has been getting flaky in some accounts since 2024). Postgres on Vercel is rock-solid, faster, and has zero auth setup.
 
-This URL is your `GOOGLE_SHEET_WEBHOOK_URL`.
+### 3c. Browsing the data
 
-> If you ever change the script: **Deploy → Manage deployments → ✏️ → New version → Deploy**. The URL stays the same.
+You have two ways to see your donations:
+
+1. **`/admin/donations`** on your live site — pretty UI with search and PDF re-download
+2. **Vercel dashboard → Storage → your DB → Data tab** — raw SQL view, exportable to CSV
 
 ---
 
@@ -230,8 +144,7 @@ Open Vercel → Project → **Settings → Environment Variables** and add each 
 | `FROM_EMAIL` | `Active Bengaluru <onboarding@resend.dev>` (or your verified domain address) | Production, Preview, Development |
 | `FINANCE_EMAIL` | `activebengaluru@gmail.com` | Production, Preview, Development |
 | `REPLY_TO_EMAIL` | `activebengaluru@gmail.com` | Production, Preview, Development |
-| `GOOGLE_SHEET_WEBHOOK_URL` | from step 3c | Production, Preview, Development |
-| `GOOGLE_SHEET_WEBHOOK_TOKEN` | the random string from step 3b | Production, Preview, Development |
+| `POSTGRES_*` (6 vars) | **auto-injected** when you create the database in Step 3 | (auto) |
 | `ADMIN_USER` | `admin` (or anything you like) | Production, Preview, Development |
 | `ADMIN_PASSWORD` | from step 4 | Production, Preview, Development |
 | `ORG_LEGAL_NAME` | `Active Bengaluru Foundation` | Production, Preview, Development |
@@ -259,18 +172,39 @@ After adding everything, trigger a redeploy: **Deployments → ⋮ on latest →
 6. Check:
    - [ ] Email arrives at the donor address with the PDF receipt attached
    - [ ] Email arrives at `activebengaluru@gmail.com` with the same PDF
-   - [ ] New row appears in your Google Sheet
    - [ ] `/admin/donations` (after entering admin password) shows the donation
 
 7. Then test a ₹2,000+ donation to verify PAN field becomes required and the receipt PDF includes PAN.
 
 ### If something fails
 
-- **`Server error` on Donate** → open Vercel → **Functions** logs → see the error
+- **`Server error` on Donate** → open Vercel → **Logs** tab → see the error
+- **`POSTGRES_URL not set`** → database not connected yet. Vercel → Storage tab → make sure the DB is "Connected" to your project. Redeploy.
+- **`relation "donations" does not exist`** → schema not initialised. Visit `/api/admin/init-db` once.
 - **Webhook signature error** → confirm `RAZORPAY_WEBHOOK_SECRET` matches what you set in Razorpay
 - **No email** → check Resend dashboard → **Logs** — common cause: domain not verified yet, sending to a freshly-created domain not allowed
-- **Sheet not appending** → open Apps Script editor → **Executions** to see errors
 - **/admin gives 401** → wrong password, or `ADMIN_PASSWORD` env var missing
+
+### Recovering a donation that wasn't logged
+
+If a Razorpay payment went through but no receipt was emailed (e.g. during initial setup before the DB was ready), you can manually record it and trigger the receipt:
+
+```bash
+curl -u admin:YOUR_ADMIN_PASSWORD \
+  -X POST https://activebengaluru.org/api/admin/recover-donation \
+  -H "Content-Type: application/json" \
+  -d '{
+    "receiptNumber": "ABF/2025-26/0001",
+    "paymentId": "pay_xxx_from_razorpay",
+    "orderId": "order_xxx_from_razorpay",
+    "amountInr": 100,
+    "donorName": "Donor Name",
+    "donorEmail": "donor@example.com",
+    "donatedAt": "2026-05-04T10:30:00.000Z"
+  }'
+```
+
+This inserts the row into the database, generates the PDF, and emails it to the donor + finance team.
 
 ---
 
@@ -302,7 +236,9 @@ Now real cards/UPI payments work.
 | Admin donations API | `src/pages/api/admin/donations.ts` |
 | 80G receipt PDF generator | `src/lib/receipt.ts` |
 | Email sender (Resend) | `src/lib/email.ts` |
-| Google Sheet client | `src/lib/sheets.ts` |
+| Postgres client | `src/lib/db.ts` |
+| Schema setup endpoint | `src/pages/api/admin/init-db.ts` |
+| Manual donation recovery | `src/pages/api/admin/recover-donation.ts` |
 | Razorpay SDK wrapper + signature verify | `src/lib/razorpay.ts` |
 
 To change the receipt design: edit `src/lib/receipt.ts`. To change the donor email body: edit `src/lib/email.ts → sendDonorReceipt`.
@@ -315,7 +251,7 @@ To change the receipt design: edit `src/lib/receipt.ts`. To change the donor ema
 |---|---|---|
 | Razorpay | Free to set up; transaction fees ~2% per donation (varies) | Per transaction, deducted from the amount |
 | Resend | 3,000 emails/month, 100/day free | Above 3k/month — paid plans start at $20/mo |
-| Google Sheets | Free | Never (for typical NGO volume) |
+| Vercel Postgres | Free (256 MB / 60 compute hours / month) | Never (for typical NGO volume) |
 | Vercel functions | 100 GB-Hours/month free | Above that — typical NGO won't hit it |
 
 For a typical NGO doing 500 donations/year: **₹0 in infrastructure costs**. You only pay Razorpay's per-transaction fee.
