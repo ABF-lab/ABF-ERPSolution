@@ -2,8 +2,12 @@ import { createPool } from "@vercel/postgres";
 
 /**
  * Resolve the Postgres connection string from whatever env var Vercel injected.
- * Vercel's classic Postgres uses POSTGRES_URL, but the newer Neon-marketplace
- * integration may inject DATABASE_URL or NEON_DATABASE_URL instead.
+ * Vercel's database integrations name the env vars inconsistently depending on
+ * the provider (classic Postgres, Neon Marketplace, Supabase, etc.) and on
+ * whether the user picked a "prefix" when connecting.
+ *
+ * We check known names first, then fall back to scanning every env var for one
+ * that looks like a Postgres connection string (`postgres://` or `postgresql://`).
  */
 function getConnectionString(): string {
   const candidates = [
@@ -12,14 +16,32 @@ function getConnectionString(): string {
     "POSTGRES_URL_NON_POOLING",
     "DATABASE_URL",
     "NEON_DATABASE_URL",
+    "POSTGRES_URL_NO_SSL",
   ];
   for (const name of candidates) {
     const v = process.env[name];
     if (v && v.length > 0) return v;
   }
+
+  // Fallback: scan everything for a postgres-shaped URL (handles prefixed
+  // variants like ABF_DONATIONS_DATABASE_URL or PRD_POSTGRES_URL).
+  for (const [name, value] of Object.entries(process.env)) {
+    if (!value) continue;
+    if (/^postgres(ql)?:\/\//i.test(value)) {
+      console.log(`[db] using connection string from env var ${name}`);
+      return value;
+    }
+  }
+
+  // Helpful diagnostic: list env var names that *might* be related so the user
+  // can spot a typo / wrong project.
+  const hint = Object.keys(process.env)
+    .filter((k) => /POSTGRES|DATABASE|NEON|SUPABASE/i.test(k))
+    .sort();
   throw new Error(
-    `No Postgres connection string found. Set one of: ${candidates.join(", ")} ` +
-    "in Vercel → Settings → Environment Variables (or connect a Vercel Storage database to this project)."
+    `No Postgres connection string found. Looked for: ${candidates.join(", ")}. ` +
+    `Env vars I CAN see that look related: ${hint.length ? hint.join(", ") : "(none)"}. ` +
+    "Check Vercel → Settings → Environment Variables and confirm a Postgres database is connected to THIS project."
   );
 }
 
