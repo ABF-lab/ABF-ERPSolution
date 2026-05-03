@@ -1,0 +1,63 @@
+---
+const nav = [
+  { href: "/about", label: "About" },
+  { href: "/projects", label: "Projects" },
+  { href: "/events", label: "Events" },
+  { href: "/relief", label: "Relief" },
+  { href: "/updates", label: "Updates" },
+  { href: "/media", label: "Media" },
+  { href: "/get-involved", label: "Get Involved" },
+];
+const path = Astro.url.pathname;
+---
+
+<header class="sticky top-0 z-40 bg-brand-yellow/95 backdrop-blur supports-[backdrop-filter]:bg-brand-yellow/80 ring-1 ring-brand-ink/5">
+  <div class="container-x flex items-center justify-between gap-4 py-3">
+    <a href="/" class="flex items-center gap-2 shrink-0" aria-label="Active Bengaluru Foundation home">
+      <img src="/images/logo.png" alt="Active Bengaluru" class="h-11 w-auto" width="160" height="44" />
+    </a>
+
+    <nav class="hidden md:flex items-center gap-1 text-sm font-semibold">
+      {nav.map((item) => (
+        <a
+          href={item.href}
+          class:list={[
+            "px-3 py-2 rounded-full transition-colors",
+            path.startsWith(item.href) ? "bg-brand-ink text-white" : "text-brand-ink hover:bg-brand-ink/10",
+          ]}
+        >
+          {item.label}
+        </a>
+      ))}
+    </nav>
+
+    <a href="tel:+919364024365" class="btn-call text-sm hidden sm:inline-flex">
+      <span aria-hidden="true">📞</span>
+      <span>24/7 Helpline</span>
+    </a>
+
+    <button id="mobileMenuBtn" class="md:hidden rounded-full p-2 hover:bg-brand-ink/10" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+  </div>
+
+  <div id="mobileMenu" class="md:hidden hidden border-t border-brand-ink/10 bg-brand-yellow">
+    <nav class="container-x py-3 flex flex-col gap-1 text-sm font-semibold">
+      {nav.map((item) => (
+        <a href={item.href} class="px-3 py-2.5 rounded-xl hover:bg-brand-ink/10">{item.label}</a>
+      ))}
+      <a href="tel:+919364024365" class="btn-call mt-2 self-start">📞 24/7 Helpline · +91 93640 24365</a>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const btn = document.getElementById("mobileMenuBtn");
+  const menu = document.getElementById("mobileMenu");
+  if (btn && menu) {
+    btn.addEventListener("click", () => {
+      const open = menu.classList.toggle("hidden");
+      btn.setAttribute("aria-expanded", String(!open));
+    });
+  }
+</script>

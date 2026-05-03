@@ -1,0 +1,85 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const articles = [
+  { outlet: "The New Indian Express", date: "Apr 2024", headline: "NGO supplies 50,000l of water in tanks to slums in North Bengaluru", topic: "Project ZAM ZAM", url: "" },
+  { outlet: "News Karnataka", date: "Apr 2024", headline: "'Active Bengaluru' Provides Water Relief to Slum Residents", topic: "Project ZAM ZAM", url: "" },
+  { outlet: "Bangalore Mirror", date: "Apr 2024", headline: "Race to Lok Sabha: Citizens' group sets up 24×7 call centres", topic: "Voter Helpline", url: "" },
+  { outlet: "Bangalore Mirror", date: "Dec 2023", headline: "Collective effort of compassion and relief from B'luru to Tuticorin", topic: "Tuticorin Floods", url: "" },
+  { outlet: "The New Indian Express", date: "Dec 2023", headline: "Volunteers from Bengaluru bring a smile to the ones affected by Tuticorin Flood", topic: "Tuticorin Floods", url: "" },
+  { outlet: "The New Indian Express", date: "May 2025", headline: "Now 'Mission NoDropOut' to tackle low SSLC pass rates in Karnataka", topic: "Mission NoDropOut", url: "" },
+  { outlet: "The Times of India", date: "May 2025", headline: "Remedial classes help Bengaluru's SSLC students prepare for supplementary exams", topic: "Mission NoDropOut", url: "" },
+  { outlet: "Deccan Herald", date: "May 2025", headline: "Free preparatory classes for SSLC supplementary exams", topic: "Mission NoDropOut", url: "" },
+  { outlet: "India Now", date: "Jun 2025", headline: "Baazigar Awards Celebrates Students Who Beat the Odds", topic: "Mission NoDropOut", url: "" },
+  { outlet: "Salar Digital (Urdu)", date: "2024", headline: "Drug Use in Slums — interview with Syed Mehran & Akshita Mehta", topic: "Raah-E-Nijat", url: "" },
+];
+
+const broadcastClips = [
+  { title: "Addressing the media on ABF Activities", image: "/images/media/coverage-1.jpg" },
+  { title: "Addressing the media on Project ZAM ZAM", image: "/images/media/coverage-1.jpg" },
+  { title: "Addressing the media on Raah-E-Nijat", image: "/images/media/coverage-1.jpg" },
+];
+---
+
+<BaseLayout title="In the Media — Active Bengaluru Foundation" description="Press coverage of ABF's work — The Indian Express, Bangalore Mirror, Times of India, Deccan Herald, News Karnataka, India Now, and more.">
+  <section class="bg-brand-yellow">
+    <div class="container-x py-14 sm:py-20">
+      <span class="chip">In the Media</span>
+      <h1 class="mt-4 heading-display">As <span class="accent-red">covered</span> in the press.</h1>
+      <p class="mt-5 max-w-2xl text-lg text-brand-ink/80 leading-relaxed">
+        ABF's work has been featured across major national and regional outlets. A select archive of articles, interviews, and broadcast appearances.
+      </p>
+    </div>
+  </section>
+
+  <!-- Coverage screenshots -->
+  <section class="container-x py-12 sm:py-16">
+    <h2 class="heading-section">Press <span class="accent-red">archive</span></h2>
+    <div class="mt-8 grid gap-6 sm:grid-cols-2">
+      <img src="/images/media/coverage-1.jpg" alt="ABF press coverage — page 1" class="rounded-3xl shadow-card-lg ring-1 ring-brand-ink/5 w-full" loading="lazy" />
+      <img src="/images/media/coverage-2.jpg" alt="ABF press coverage — page 2" class="rounded-3xl shadow-card-lg ring-1 ring-brand-ink/5 w-full" loading="lazy" />
+    </div>
+  </section>
+
+  <!-- Article list -->
+  <section class="bg-brand-cream">
+    <div class="container-x py-12 sm:py-16">
+      <h2 class="heading-section">Featured <span class="accent-red">articles</span></h2>
+      <ul class="mt-8 grid gap-3">
+        {articles.map((a) => (
+          <li class="card p-5 sm:p-6 flex flex-wrap items-start sm:items-center justify-between gap-3 hover:shadow-card-lg transition-shadow">
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wider text-brand-ink/55 font-semibold">
+                <span>{a.outlet}</span>
+                <span>·</span>
+                <span>{a.date}</span>
+                <span>·</span>
+                <span class="chip-red">{a.topic}</span>
+              </div>
+              <h3 class="font-semibold text-lg sm:text-xl mt-1.5 leading-snug">{a.headline}</h3>
+            </div>
+            {a.url ? (
+              <a href={a.url} target="_blank" rel="noopener" class="btn-secondary text-sm whitespace-nowrap">Read →</a>
+            ) : (
+              <span class="text-xs text-brand-ink/45">Link forthcoming</span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <!-- Press contact -->
+  <section class="container-x py-12 sm:py-16">
+    <div class="rounded-3xl bg-brand-ink text-white p-6 sm:p-10">
+      <h2 class="font-display text-2xl sm:text-3xl [overflow-wrap:anywhere]">Press &amp; media enquiries</h2>
+      <p class="mt-3 text-white/80 max-w-prose">
+        For interviews, ground access, or quotes from the team, write to us — we typically respond within a working day.
+      </p>
+      <div class="mt-5 flex flex-wrap gap-3">
+        <a href="mailto:activebengaluru@gmail.com" class="btn-yellow text-sm sm:text-base [overflow-wrap:anywhere]">activebengaluru@gmail.com</a>
+        <a href="tel:+919364024365" class="btn-secondary text-sm sm:text-base">+91 93640 24365</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

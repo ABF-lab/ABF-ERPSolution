@@ -1,0 +1,67 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Contact — Active Bengaluru Foundation" description="Reach Active Bengaluru Foundation. 24/7 medical helpline +91 93640 24365. Office at Lazar Road, Fraser Town, Bangalore.">
+  <section class="bg-brand-yellow">
+    <div class="container-x py-14 sm:py-20">
+      <span class="chip">Contact</span>
+      <h1 class="mt-4 heading-display">Get in <span class="accent-red">touch</span>.</h1>
+      <p class="mt-5 max-w-2xl text-lg text-brand-ink/80 leading-relaxed">
+        Medical case? Press enquiry? Want to volunteer? One number, one inbox, one office — pick the channel that fits.
+      </p>
+    </div>
+  </section>
+
+  <section class="container-x py-12 sm:py-16 grid gap-6 md:grid-cols-3">
+    <a href="tel:+919364024365" class="card p-6 hover:shadow-card-lg transition-shadow group">
+      <span class="chip-red">Call · 24/7</span>
+      <h2 class="font-display text-2xl mt-3">Active Health Helpline</h2>
+      <div class="mt-4 font-display text-2xl sm:text-3xl tabular-nums">+91 93640 24365</div>
+      <p class="mt-3 text-brand-ink/70 text-sm">Call any time, any day. We'll route your case to the right government facility or scheme.</p>
+    </a>
+
+    <a href="https://wa.me/919364024365" target="_blank" rel="noopener" class="card p-6 hover:shadow-card-lg transition-shadow group">
+      <span class="chip">WhatsApp</span>
+      <h2 class="font-display text-2xl mt-3">Message us</h2>
+      <div class="mt-4 font-display text-2xl sm:text-3xl tabular-nums">+91 93640 24365</div>
+      <p class="mt-3 text-brand-ink/70 text-sm">Quickest way to chat about volunteering, donations, partnerships, or general queries.</p>
+    </a>
+
+    <a href="mailto:activebengaluru@gmail.com" class="card p-6 hover:shadow-card-lg transition-shadow group">
+      <span class="chip">Email</span>
+      <h2 class="font-display text-2xl mt-3">General &amp; press</h2>
+      <div class="mt-4 font-mono text-sm sm:text-base break-all">activebengaluru@gmail.com</div>
+      <p class="mt-3 text-brand-ink/70 text-sm">Response within one working day. Use this for press, CSR, and partnership enquiries.</p>
+    </a>
+  </section>
+
+  <section class="bg-brand-cream">
+    <div class="container-x py-12 sm:py-16 grid gap-10 lg:grid-cols-[1fr_1.2fr] items-start">
+      <div>
+        <span class="chip">Visit</span>
+        <h2 class="heading-section mt-3">Office</h2>
+        <address class="not-italic mt-4 text-lg leading-relaxed">
+          Active Bengaluru Foundation<br/>
+          No 12, 1st Floor, Lazar Road,<br/>
+          Fraser Town,<br/>
+          Bangalore – 560005<br/>
+          Karnataka, India
+        </address>
+        <a href="https://maps.google.com/?q=No+12+Lazar+Road+Fraser+Town+Bangalore+560005" target="_blank" rel="noopener" class="btn-secondary mt-5">Open in Google Maps →</a>
+      </div>
+
+      <div class="aspect-[4/3] rounded-3xl overflow-hidden shadow-card-lg ring-1 ring-brand-ink/5">
+        <iframe
+          title="ABF office on Google Maps"
+          src="https://www.google.com/maps?q=No+12+Lazar+Road+Fraser+Town+Bangalore+560005&output=embed"
+          width="100%"
+          height="100%"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          style="border:0"
+        ></iframe>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

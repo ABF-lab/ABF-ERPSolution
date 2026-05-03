@@ -1,0 +1,29 @@
+---
+import { getCollection } from "astro:content";
+import EntryLayout from "../../layouts/EntryLayout.astro";
+
+export async function getStaticPaths() {
+  const entries = await getCollection("relief");
+  return entries.map((entry) => ({ params: { slug: entry.slug }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await entry.render();
+---
+
+<EntryLayout
+  kind="relief"
+  title={entry.data.title}
+  tagline={entry.data.tagline}
+  summary={entry.data.summary}
+  heroImage={entry.data.heroImage}
+  thumbnailIcon={entry.data.thumbnailIcon}
+  thumbnailAccent={entry.data.thumbnailAccent}
+  occurredOn={entry.data.occurredOn}
+  location={entry.data.location}
+  status={entry.data.status}
+  partners={entry.data.partners}
+  stats={entry.data.stats}
+>
+  <Content />
+</EntryLayout>

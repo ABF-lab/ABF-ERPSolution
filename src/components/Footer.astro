@@ -1,0 +1,51 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer class="bg-brand-ink text-white/85">
+  <div class="container-x py-14 grid gap-10 md:grid-cols-4">
+    <div class="md:col-span-2">
+      <img src="/images/logo.png" alt="Active Bengaluru" class="h-12 w-auto" />
+      <p class="mt-5 max-w-md text-white/70 leading-relaxed">
+        A people's movement for a better, healthier Bengaluru. We bridge NGOs, government, and civil society — and act when the system can't.
+      </p>
+      <a href="/about" class="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-brand-yellow hover:text-white">
+        About ABF <span aria-hidden="true">→</span>
+      </a>
+    </div>
+
+    <div>
+      <h4 class="font-display text-lg text-brand-yellow">Visit</h4>
+      <address class="not-italic mt-3 text-sm leading-relaxed text-white/75">
+        No 12, 1st Floor, Lazar Road,<br/>
+        Fraser Town, Bangalore 560005
+      </address>
+      <div class="mt-4 space-y-1.5 text-sm">
+        <a href="tel:+919364024365" class="block hover:text-brand-yellow">+91 93640 24365 · 24/7 helpline</a>
+        <a href="mailto:activebengaluru@gmail.com" class="block hover:text-brand-yellow break-all">activebengaluru@gmail.com</a>
+        <a href="https://www.activebengaluru.org" class="block hover:text-brand-yellow">www.activebengaluru.org</a>
+      </div>
+    </div>
+
+    <div>
+      <h4 class="font-display text-lg text-brand-yellow">Quick links</h4>
+      <ul class="mt-3 space-y-2 text-sm">
+        <li><a href="/about" class="hover:text-brand-yellow">About Us</a></li>
+        <li><a href="/projects" class="hover:text-brand-yellow">Projects</a></li>
+        <li><a href="/events" class="hover:text-brand-yellow">Events</a></li>
+        <li><a href="/relief" class="hover:text-brand-yellow">Relief Campaigns</a></li>
+        <li><a href="/updates" class="hover:text-brand-yellow">Updates</a></li>
+        <li><a href="/media" class="hover:text-brand-yellow">In the Media</a></li>
+        <li><a href="/get-involved" class="hover:text-brand-yellow">Donate &amp; Volunteer</a></li>
+        <li><a href="/contact" class="hover:text-brand-yellow">Contact</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="border-t border-white/10">
+    <div class="container-x py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-white/50">
+      <span>© {year} Active Bengaluru Foundation. All rights reserved.</span>
+      <span>Built as a people's movement.</span>
+    </div>
+  </div>
+</footer>

@@ -1,0 +1,37 @@
+---
+import { getCollection } from "astro:content";
+import EntryLayout from "../../layouts/EntryLayout.astro";
+
+export async function getStaticPaths() {
+  const entries = await getCollection("events");
+  return entries.map((entry) => ({ params: { slug: entry.slug }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await entry.render();
+
+let parentProject: { slug: string; title: string } | undefined;
+if (entry.data.relatedProject) {
+  const projects = await getCollection("projects");
+  const found = projects.find((p) => p.slug === entry.data.relatedProject);
+  if (found) parentProject = { slug: found.slug, title: found.data.title };
+}
+---
+
+<EntryLayout
+  kind="event"
+  title={entry.data.title}
+  tagline={entry.data.tagline}
+  summary={entry.data.summary}
+  heroImage={entry.data.heroImage}
+  thumbnailIcon={entry.data.thumbnailIcon}
+  thumbnailAccent={entry.data.thumbnailAccent}
+  occurredOn={entry.data.occurredOn}
+  location={entry.data.location}
+  status={entry.data.status}
+  partners={entry.data.partners}
+  stats={entry.data.stats}
+  parentProject={parentProject}
+>
+  <Content />
+</EntryLayout>

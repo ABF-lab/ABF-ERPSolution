@@ -1,0 +1,44 @@
+---
+import ProjectThumbnail from "./ProjectThumbnail.astro";
+
+interface Props {
+  href: string;
+  title: string;
+  tagline?: string;
+  summary: string;
+  category: "Project" | "Relief" | "Event";
+  icon?: string;
+  accent?: "yellow" | "red" | "ink" | "cream";
+  badge?: string;
+  flagship?: boolean;
+}
+const {
+  href, title, tagline, summary, category,
+  icon = "sparkle", accent = "yellow",
+  badge, flagship = false,
+} = Astro.props;
+---
+
+<a
+  href={href}
+  class:list={[
+    "group block card hover:shadow-card-lg transition-all duration-200 hover:-translate-y-0.5",
+    flagship && "ring-2 ring-brand-red",
+  ]}
+>
+  <ProjectThumbnail
+    title={title}
+    category={category}
+    icon={icon}
+    accent={accent}
+    badge={badge}
+    flagship={flagship}
+  />
+  <div class="p-6 bg-white">
+    {tagline && <p class="text-sm font-semibold text-brand-red leading-snug">{tagline}</p>}
+    <p class="mt-3 text-brand-ink/75 text-[0.95rem] leading-relaxed line-clamp-3">{summary}</p>
+    <span class="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-ink group-hover:text-brand-red">
+      Read more <span aria-hidden="true">→</span>
+    </span>
+  </div>
+</a>

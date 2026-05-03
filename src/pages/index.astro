@@ -1,0 +1,175 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import ProjectCard from "../components/ProjectCard.astro";
+import HeroCollage from "../components/HeroCollage.astro";
+import DonateBlock from "../components/DonateBlock.astro";
+import VolunteerBlock from "../components/VolunteerBlock.astro";
+
+const projects = (await getCollection("projects")).sort((a, b) => a.data.order - b.data.order);
+const featuredProjects = projects.slice(0, 4);
+const events = (await getCollection("events")).sort((a, b) => a.data.order - b.data.order);
+const featuredEvents = events.slice(0, 3);
+const relief = (await getCollection("relief")).sort((a, b) => a.data.order - b.data.order);
+const featuredRelief = relief.slice(0, 3);
+const updates = (await getCollection("updates")).sort(
+  (a, b) => b.data.publishedOn.getTime() - a.data.publishedOn.getTime()
+);
+const latestUpdate = updates[0];
+---
+
+<BaseLayout>
+  <!-- HERO -->
+  <section class="relative bg-brand-yellow overflow-hidden">
+    <div class="absolute inset-0 opacity-[0.06] pointer-events-none" aria-hidden="true">
+      <div class="absolute -top-24 -left-24 h-96 w-96 rounded-full bg-brand-red blur-3xl"></div>
+      <div class="absolute -bottom-32 -right-24 h-96 w-96 rounded-full bg-brand-ink blur-3xl"></div>
+    </div>
+    <div class="relative container-x py-16 sm:py-24 grid gap-10 lg:grid-cols-[1.1fr_1fr] items-center">
+      <div>
+        <span class="chip-red">A people's movement</span>
+        <h1 class="mt-5 font-display text-[1.65rem] sm:text-5xl md:text-6xl lg:text-7xl leading-[1.05] tracking-tight [overflow-wrap:anywhere]">
+          Action for <span class="accent-red">community</span>.<br/>
+          The <span class="accent-red">bridge</span> between NGOs.
+        </h1>
+        <p class="mt-6 max-w-2xl text-lg sm:text-xl text-brand-ink/80 leading-snug">
+          Born from COVID-era relief work, ABF is the connective tissue between civil society, government, and the underprivileged communities we serve — not another NGO competing on the same patch, but the bridge that makes the others stronger.
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href="/projects/active-health" class="btn-primary">Explore Active Health →</a>
+          <a href="tel:+919364024365" class="btn-call">📞 Call 24/7 — +91 93640 24365</a>
+          <a href="/get-involved" class="btn-secondary">Donate / Volunteer</a>
+        </div>
+      </div>
+
+      <HeroCollage />
+    </div>
+  </section>
+
+  <!-- THE BRIDGE -->
+  <section class="container-x py-16 sm:py-20">
+    <div class="grid gap-12 md:grid-cols-2 items-start">
+      <div>
+        <span class="chip">Our thesis</span>
+        <h2 class="heading-section mt-4">Be the bridge. <span class="accent-red">Don't duplicate.</span></h2>
+      </div>
+      <div class="prose-abf">
+        <p>
+          ABF was started by people who spent two and a half years on the ground during COVID — getting hospital beds, running emergency response, helping with Shramik trains, organising relief at scale across Bengaluru.
+        </p>
+        <p>
+          When we started ABF, we didn't want to compete with the NGOs we'd worked alongside. We wanted to <strong>connect</strong> them. The work we do — Active Health, equipment banks, scheme awareness, advocacy — is overarching infrastructure that other NGOs can rely on, build on, and route their cases through.
+        </p>
+        <p>That's the model. <strong>A people's movement.</strong></p>
+        <a href="/about" class="btn-secondary">Read the full story →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROJECTS -->
+  <section class="bg-brand-cream">
+    <div class="container-x py-16 sm:py-20">
+      <div class="flex flex-wrap items-end justify-between gap-4 mb-10">
+        <div>
+          <span class="chip">Projects</span>
+          <h2 class="heading-section mt-3">Long-term <span class="accent-red">change</span>.</h2>
+        </div>
+        <a href="/projects" class="btn-secondary">View all projects →</a>
+      </div>
+      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {featuredProjects.map((p) => (
+          <ProjectCard
+            href={`/projects/${p.slug}`}
+            title={p.data.title}
+            tagline={p.data.tagline}
+            summary={p.data.summary}
+            category="Project"
+            icon={p.data.thumbnailIcon}
+            accent={p.data.thumbnailAccent}
+            flagship={p.data.flagship}
+          />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- EVENTS -->
+  <section class="container-x py-16 sm:py-20">
+    <div class="flex flex-wrap items-end justify-between gap-4 mb-10">
+      <div>
+        <span class="chip-red">Events</span>
+        <h2 class="heading-section mt-3">Where the work <span class="accent-red">comes alive</span>.</h2>
+      </div>
+      <a href="/events" class="btn-secondary">View all events →</a>
+    </div>
+    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {featuredEvents.map((e) => (
+        <ProjectCard
+          href={`/events/${e.slug}`}
+          title={e.data.title}
+          tagline={e.data.tagline}
+          summary={e.data.summary}
+          category="Event"
+          icon={e.data.thumbnailIcon}
+          accent={e.data.thumbnailAccent}
+          badge={e.data.occurredOn}
+        />
+      ))}
+    </div>
+  </section>
+
+  <!-- RELIEF -->
+  <section class="bg-brand-cream">
+    <div class="container-x py-16 sm:py-20">
+      <div class="flex flex-wrap items-end justify-between gap-4 mb-10">
+        <div>
+          <span class="chip-red">Relief Campaigns</span>
+          <h2 class="heading-section mt-3">When the moment calls, <span class="accent-red">we move.</span></h2>
+        </div>
+        <a href="/relief" class="btn-secondary">View all campaigns →</a>
+      </div>
+      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {featuredRelief.map((r) => (
+          <ProjectCard
+            href={`/relief/${r.slug}`}
+            title={r.data.title}
+            tagline={r.data.tagline}
+            summary={r.data.summary}
+            category="Relief"
+            icon={r.data.thumbnailIcon}
+            accent={r.data.thumbnailAccent}
+            badge={r.data.occurredOn}
+          />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- LATEST UPDATE -->
+  {latestUpdate && (
+    <section class="bg-brand-yellow">
+      <div class="container-x py-16 sm:py-20 grid gap-10 lg:grid-cols-[1fr_1.2fr] items-center">
+        <div>
+          {latestUpdate.data.coverImage && (
+            <img src={latestUpdate.data.coverImage} alt={latestUpdate.data.title} class="rounded-3xl shadow-card-lg w-full" />
+          )}
+        </div>
+        <div>
+          <span class="chip-red">Latest update</span>
+          <h2 class="heading-section mt-3">{latestUpdate.data.title}</h2>
+          {latestUpdate.data.issue && <p class="mt-1 text-sm font-semibold text-brand-ink/65">{latestUpdate.data.issue}</p>}
+          <p class="mt-4 text-brand-ink/85 text-lg leading-relaxed">{latestUpdate.data.summary}</p>
+          <a href={`/updates/${latestUpdate.slug}`} class="btn-primary mt-6">Read the issue →</a>
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- DONATE / VOLUNTEER -->
+  <section class="container-x py-16 sm:py-20">
+    <div class="grid gap-6 lg:grid-cols-2">
+      <DonateBlock />
+      <VolunteerBlock />
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,123 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import StatCard from "../components/StatCard.astro";
+import ProjectThumbnail from "../components/ProjectThumbnail.astro";
+import RelatedEvents from "../components/RelatedEvents.astro";
+
+interface Props {
+  title: string;
+  tagline?: string;
+  summary: string;
+  heroImage?: string;
+  thumbnailIcon?: string;
+  thumbnailAccent?: "yellow" | "red" | "ink" | "cream";
+  startedAt?: string;
+  occurredOn?: string;
+  location?: string;
+  status?: string;
+  partners?: string[];
+  stats?: { value: string; label: string }[];
+  ctaPhone?: string;
+  kind: "project" | "relief" | "event";
+  parentProject?: { slug: string; title: string };
+  projectSlug?: string;
+}
+const {
+  title, tagline, summary, heroImage,
+  thumbnailIcon = "sparkle", thumbnailAccent = "yellow",
+  startedAt, occurredOn, location, status,
+  partners = [], stats = [], ctaPhone, kind,
+  parentProject, projectSlug,
+} = Astro.props;
+
+const kindLabel =
+  kind === "project" ? "Project" : kind === "relief" ? "Relief Campaign" : "Event";
+const backHref =
+  kind === "project" ? "/projects" : kind === "relief" ? "/relief" : "/events";
+const backLabel =
+  kind === "project" ? "Projects" : kind === "relief" ? "Relief" : "Events";
+const thumbCategory: "Project" | "Relief" | "Event" =
+  kind === "project" ? "Project" : kind === "relief" ? "Relief" : "Event";
+---
+
+<BaseLayout title={`${title} — Active Bengaluru Foundation`} description={summary} image={heroImage}>
+  <article>
+    <header class="bg-brand-yellow">
+      <div class="container-x py-12 sm:py-16 grid gap-10 lg:grid-cols-[1.1fr_1fr] items-center">
+        <div>
+          <a href={backHref} class="inline-flex items-center gap-1 text-sm font-semibold text-brand-ink/70 hover:text-brand-red mb-5">
+            ← Back to {backLabel}
+          </a>
+          <span class="chip-red">{kindLabel}</span>
+          <h1 class="mt-4 heading-display">{title}</h1>
+          {tagline && <p class="mt-4 text-lg sm:text-xl text-brand-ink/80 leading-snug max-w-xl">{tagline}</p>}
+
+          {parentProject && (
+            <a href={`/projects/${parentProject.slug}`} class="mt-5 inline-flex max-w-full items-center gap-2 rounded-full bg-brand-ink text-white px-4 py-2 text-sm font-semibold hover:bg-brand-red transition-colors [overflow-wrap:anywhere]">
+              <span class="shrink-0">Part of</span>
+              <span class="font-display">{parentProject.title}</span>
+              <span class="shrink-0" aria-hidden="true">→</span>
+            </a>
+          )}
+
+          <dl class="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3 text-sm">
+            {startedAt && (<><dt class="text-brand-ink/55 col-span-1">Started</dt><dd class="font-semibold col-span-1 sm:col-span-2">{startedAt}</dd></>)}
+            {occurredOn && (<><dt class="text-brand-ink/55 col-span-1">When</dt><dd class="font-semibold col-span-1 sm:col-span-2">{occurredOn}</dd></>)}
+            {location && (<><dt class="text-brand-ink/55 col-span-1">Where</dt><dd class="font-semibold col-span-1 sm:col-span-2">{location}</dd></>)}
+            {status && (<><dt class="text-brand-ink/55 col-span-1">Status</dt><dd class="font-semibold capitalize col-span-1 sm:col-span-2">{status}</dd></>)}
+          </dl>
+
+          {ctaPhone && (
+            <a href={`tel:${ctaPhone}`} class="btn-call mt-7">
+              <span aria-hidden="true">📞</span> Call 24/7 — +91 93640 24365
+            </a>
+          )}
+        </div>
+
+        <div class="relative">
+          <div class="rounded-3xl overflow-hidden shadow-card-lg ring-1 ring-brand-ink/5 bg-white">
+            {heroImage ? (
+              <img src={heroImage} alt={title} class="w-full h-full object-cover" loading="eager" />
+            ) : (
+              <ProjectThumbnail
+                title={title}
+                category={thumbCategory}
+                icon={thumbnailIcon}
+                accent={thumbnailAccent}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+    </header>
+
+    {stats.length > 0 && (
+      <section class="bg-brand-paper border-y border-brand-ink/5">
+        <div class="container-x py-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+          {stats.map((s, i) => (
+            <StatCard value={s.value} label={s.label} accent={i === 0 ? "red" : i % 2 === 0 ? "yellow" : "ink"} />
+          ))}
+        </div>
+      </section>
+    )}
+
+    <section class="container-narrow py-12 sm:py-16">
+      <div class="prose-abf">
+        <slot />
+      </div>
+
+      {partners.length > 0 && (
+        <aside class="mt-12 rounded-2xl bg-brand-cream p-6">
+          <div class="text-xs uppercase tracking-wider text-brand-ink/55 font-semibold">Partners &amp; collaborators</div>
+          <ul class="mt-3 flex flex-wrap gap-2">
+            {partners.map((p) => (<li class="rounded-full bg-white px-3 py-1.5 text-sm font-medium ring-1 ring-brand-ink/10">{p}</li>))}
+          </ul>
+        </aside>
+      )}
+    </section>
+
+    {kind === "project" && projectSlug && (
+      <RelatedEvents projectSlug={projectSlug} />
+    )}
+  </article>
+</BaseLayout>

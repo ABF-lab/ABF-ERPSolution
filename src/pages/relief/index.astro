@@ -1,0 +1,36 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ProjectCard from "../../components/ProjectCard.astro";
+
+const relief = (await getCollection("relief")).sort((a, b) => a.data.order - b.data.order);
+---
+
+<BaseLayout title="Relief Campaigns — Active Bengaluru Foundation" description="Time-bound campaigns and direct-action interventions by ABF: Project ZAM ZAM, Tuticorin floods, Voter helpline, school shoes, summer camps, and more.">
+  <section class="bg-brand-red text-white">
+    <div class="container-x py-14 sm:py-20">
+      <span class="chip bg-white/10 text-white">Relief Campaigns</span>
+      <h1 class="mt-4 heading-display">When the moment calls — <span class="text-brand-yellow">we move.</span></h1>
+      <p class="mt-5 max-w-2xl text-lg text-white/85 leading-relaxed">
+        Time-bound campaigns and direct-action interventions. Floods, water crises, election-day helplines, distributions — these are the moments when a people's movement actually shows up.
+      </p>
+    </div>
+  </section>
+
+  <section class="container-x py-12 sm:py-16">
+    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {relief.map((r) => (
+        <ProjectCard
+          href={`/relief/${r.slug}`}
+          title={r.data.title}
+          tagline={r.data.tagline}
+          summary={r.data.summary}
+          category="Relief"
+          icon={r.data.thumbnailIcon}
+          accent={r.data.thumbnailAccent}
+          badge={r.data.occurredOn}
+        />
+      ))}
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import DonateBlock from "../components/DonateBlock.astro";
+import VolunteerBlock from "../components/VolunteerBlock.astro";
+---
+
+<BaseLayout title="Get Involved — Active Bengaluru Foundation" description="Volunteer with us, donate, or contribute medical equipment, time, and expertise to a people's movement.">
+  <section class="bg-brand-yellow">
+    <div class="container-x py-14 sm:py-20">
+      <span class="chip-red">Get Involved</span>
+      <h1 class="mt-4 heading-display">Be part of <span class="accent-red">a people's movement.</span></h1>
+      <p class="mt-5 max-w-2xl text-lg text-brand-ink/80 leading-relaxed">
+        Whether you have an hour, a skill, ₹100, or a wheelchair gathering dust in a closet — we have a way to put it to work.
+      </p>
+    </div>
+  </section>
+
+  <section class="container-x py-12 sm:py-16">
+    <div class="grid gap-6 lg:grid-cols-2">
+      <DonateBlock />
+      <VolunteerBlock />
+    </div>
+  </section>
+
+  <section class="bg-brand-cream">
+    <div class="container-x py-14 sm:py-16 grid gap-8 md:grid-cols-3">
+      <div>
+        <span class="chip-red">In-kind</span>
+        <h3 class="font-display text-2xl mt-3">Donate equipment</h3>
+        <p class="mt-2 text-brand-ink/75 leading-relaxed">Wheelchairs, walkers, oxygen concentrators, hospital beds, nebulizers, BiPAPs — if it works (or just needs minor repair), we can place it with a family that needs it.</p>
+        <a href="/projects/medical-equipment-bank" class="btn-secondary mt-4">Equipment Bank →</a>
+      </div>
+      <div>
+        <span class="chip-red">Skills</span>
+        <h3 class="font-display text-2xl mt-3">Lend an expertise</h3>
+        <p class="mt-2 text-brand-ink/75 leading-relaxed">Doctors, lawyers, teachers, designers, developers, content writers, social-media managers — we route skills the same way we route cases.</p>
+        <a href="mailto:activebengaluru@gmail.com" class="btn-secondary mt-4">Email us →</a>
+      </div>
+      <div>
+        <span class="chip-red">CSR</span>
+        <h3 class="font-display text-2xl mt-3">Partner with ABF</h3>
+        <p class="mt-2 text-brand-ink/75 leading-relaxed">We're an official CSR partner of BWSSB, Govt of Karnataka. If your organisation is looking for a credible NGO partner with measurable impact, let's talk.</p>
+        <a href="/contact" class="btn-secondary mt-4">Get in touch →</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

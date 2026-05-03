@@ -1,0 +1,36 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ProjectCard from "../../components/ProjectCard.astro";
+
+const projects = (await getCollection("projects")).sort((a, b) => a.data.order - b.data.order);
+---
+
+<BaseLayout title="Projects — Active Bengaluru Foundation" description="Long-term initiatives by ABF: Active Health helpline, Mission NoDropOut, Raah-E-Nijat, BangaloreSehri, Equipment Banks, and Minority Welfare Research.">
+  <section class="bg-brand-yellow">
+    <div class="container-x py-14 sm:py-20">
+      <span class="chip">Projects</span>
+      <h1 class="mt-4 heading-display">Long-term <span class="accent-red">change</span>, not one-off events.</h1>
+      <p class="mt-5 max-w-2xl text-lg text-brand-ink/80 leading-relaxed">
+        Each of these is a multi-year programme designed to outlast any single intervention — building infrastructure, expertise, and community capacity for the long haul.
+      </p>
+    </div>
+  </section>
+
+  <section class="container-x py-12 sm:py-16">
+    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {projects.map((p) => (
+        <ProjectCard
+          href={`/projects/${p.slug}`}
+          title={p.data.title}
+          tagline={p.data.tagline}
+          summary={p.data.summary}
+          category="Project"
+          icon={p.data.thumbnailIcon}
+          accent={p.data.thumbnailAccent}
+          flagship={p.data.flagship}
+        />
+      ))}
+    </div>
+  </section>
+</BaseLayout>

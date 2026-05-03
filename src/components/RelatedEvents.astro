@@ -1,0 +1,45 @@
+---
+import { getCollection } from "astro:content";
+import ProjectThumbnail from "./ProjectThumbnail.astro";
+
+interface Props {
+  projectSlug: string;
+}
+const { projectSlug } = Astro.props;
+
+const allEvents = await getCollection("events");
+const related = allEvents
+  .filter((e) => e.data.relatedProject === projectSlug)
+  .sort((a, b) => a.data.order - b.data.order);
+
+if (related.length === 0) return null;
+---
+
+<section class="bg-brand-cream border-t border-brand-ink/5">
+  <div class="container-x py-12 sm:py-16">
+    <div class="flex flex-wrap items-end justify-between gap-3 mb-8">
+      <div>
+        <span class="chip-red">Related events</span>
+        <h2 class="font-display text-2xl sm:text-3xl mt-3">From this programme on the ground</h2>
+      </div>
+      <a href="/events" class="text-sm font-semibold text-brand-ink/70 hover:text-brand-red">All events →</a>
+    </div>
+    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {related.map((e) => (
+        <a href={`/events/${e.slug}`} class="group block card hover:shadow-card-lg transition-all duration-200 hover:-translate-y-0.5">
+          <ProjectThumbnail
+            title={e.data.title}
+            category="Event"
+            icon={e.data.thumbnailIcon}
+            accent={e.data.thumbnailAccent}
+            badge={e.data.occurredOn}
+          />
+          <div class="p-5 bg-white">
+            {e.data.tagline && <p class="text-sm font-semibold text-brand-red leading-snug">{e.data.tagline}</p>}
+            <span class="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold group-hover:text-brand-red">Read event <span aria-hidden="true">→</span></span>
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>

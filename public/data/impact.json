@@ -1,0 +1,6 @@
+{
+  "totalCases": 1625,
+  "totalSavedINR": 37752575,
+  "asOf": "April 2026",
+  "note": "Fallback values used when PUBLIC_IMPACT_CSV_URL is unset or unreachable. Sourced from ACTIVE UPDATES April 2026."
+}

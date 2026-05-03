@@ -1,0 +1,89 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import StatCard from "../components/StatCard.astro";
+---
+
+<BaseLayout title="About — Active Bengaluru Foundation" description="ABF was born from a tight-knit group of COVID-era volunteers. A registered Section 8 NGO with 12A and 80G certifications, we are a bridge between civil society, government, and the underprivileged communities we serve.">
+  <section class="bg-brand-yellow">
+    <div class="container-x py-14 sm:py-20 grid gap-10 lg:grid-cols-[1.2fr_1fr] items-center">
+      <div>
+        <span class="chip-red">About Us</span>
+        <h1 class="mt-4 font-display text-[1.65rem] sm:text-5xl md:text-6xl lg:text-7xl leading-[1.1] tracking-tight [overflow-wrap:anywhere]">
+          A people's <span class="accent-red">movement</span> — built by the people who showed up.
+        </h1>
+        <p class="mt-6 max-w-2xl text-lg sm:text-xl text-brand-ink/80 leading-snug">
+          Active Bengaluru Foundation envisions a better, healthier future for all by uplifting the lives of the underprivileged with a steadfast commitment to <strong>social justice</strong> and <strong>compassion</strong>.
+        </p>
+      </div>
+      <div class="rounded-3xl overflow-hidden shadow-card-lg ring-1 ring-brand-ink/10 bg-white">
+        <img src="/images/about-hero.jpg" alt="About ABF" class="w-full" />
+      </div>
+    </div>
+  </section>
+
+  <!-- ORIGIN -->
+  <section class="container-narrow py-16 sm:py-20">
+    <span class="chip">Origin</span>
+    <h2 class="heading-section mt-3">From COVID relief to a registered NGO.</h2>
+    <div class="prose-abf mt-6">
+      <p>
+        Active Bengaluru Foundation was started by a group of people who had spent <strong>two and a half years</strong> on the ground during COVID — running emergency response, getting hospital beds, helping with Shramik trains, and organising relief at scale across Bengaluru. They were the key people who derived community and relief work in the city, building deep networks across NGOs, government bodies, and civil society.
+      </p>
+      <p>
+        These people were resourceful, well-connected, and trusted. When COVID receded, the question was: <em>what now?</em>
+      </p>
+      <p>
+        The answer was deliberate. Not <em>another</em> NGO competing with the dozens already operating in Bengaluru — but an organisation built specifically to <strong>bridge</strong> NGOs. Connect them. Provide overarching infrastructure that other NGOs could rely on. Refuse to duplicate what already existed.
+      </p>
+      <p>
+        That bridge model is the thread running through every project we've built since.
+      </p>
+    </div>
+  </section>
+
+  <!-- ACTIVE HEALTH AS THE PROOF -->
+  <section class="bg-brand-cream">
+    <div class="container-narrow py-16 sm:py-20">
+      <span class="chip-red">Case in point</span>
+      <h2 class="heading-section mt-3">Active Health — what the bridge model looks like in practice.</h2>
+      <div class="prose-abf mt-6">
+        <p>
+          Active Health started as a single 24/7 phone number. We've since handled <strong>1,500+ medical cases</strong> and <strong>saved approximately ₹4 crore</strong> for the community — not by paying anyone's bills, but by <strong>knowing exactly which government facility, doctor, or scheme</strong> can help, and walking the family through the door.
+        </p>
+        <p>
+          Active Health has now become a hallmark — a service that <em>other NGOs themselves</em> route their beneficiaries to when they need medical guidance. That's the proof of the model. We're not the only NGO doing healthcare work; we're the one that the others rely on for the connective layer.
+        </p>
+        <p>
+          That premise — solving problems for NGOs and broader communities by being the connective tissue — is how we started, and it's how we keep building.
+        </p>
+        <a href="/projects/active-health" class="btn-primary">Read more about Active Health →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- MISSION -->
+  <section class="container-narrow py-16 sm:py-20">
+    <span class="chip">Mission</span>
+    <h2 class="heading-section mt-3">What we commit to.</h2>
+    <div class="prose-abf mt-6">
+      <p>
+        ABF is committed to assisting underprivileged communities with issues related to <strong>human rights, education, health, entitlements, and poverty reduction</strong>. We aim to empower local teams and act as a catalyst for collaboration with young volunteers, NGOs, civil society, government agencies, and institutions — in order to learn from, replicate, and build on each other's strengths.
+      </p>
+    </div>
+  </section>
+
+  <!-- LEGAL -->
+  <section class="bg-brand-ink text-white/85">
+    <div class="container-x py-12 sm:py-16">
+      <span class="chip bg-white/10 text-white">Legal &amp; registration</span>
+      <h2 class="font-display text-3xl sm:text-4xl mt-3 text-white">Built to be accountable.</h2>
+      <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard value="2024" label="Registered (Section 8)" accent="yellow" />
+        <StatCard value="12A" label="Income-tax exemption" accent="yellow" />
+        <StatCard value="80G" label="Donation certification" accent="yellow" />
+        <StatCard value="ABF" label="Bengaluru, Karnataka" accent="yellow" />
+      </div>
+      <p class="mt-6 text-sm text-white/70 font-mono">CIN: U85500KA2024NPL184982</p>
+    </div>
+  </section>
+</BaseLayout>

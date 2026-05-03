@@ -1,0 +1,28 @@
+# build output
+dist/
+.astro/
+
+# deps
+node_modules/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# env
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+
+# editor
+.vscode/
+.idea/
+.claude/
+
+# extraction artifacts (keep curated images in public/, not the raw dump)
+_extract/

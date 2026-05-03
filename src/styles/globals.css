@@ -1,0 +1,110 @@
+@import url("https://fonts.googleapis.com/css2?family=Archivo+Black&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
+}
+body {
+  background: #FFFDF5;
+  color: #1A1A1A;
+  font-family: "Plus Jakarta Sans", Inter, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+h1, h2, h3, h4 {
+  font-family: "Archivo Black", Impact, system-ui, sans-serif;
+  letter-spacing: -0.025em;
+}
+::selection {
+  background: #FFD23F;
+  color: #1A1A1A;
+}
+
+@layer components {
+  .container-x {
+    @apply mx-auto w-full max-w-6xl px-5 sm:px-8;
+  }
+  .container-narrow {
+    @apply mx-auto w-full max-w-3xl px-5 sm:px-8;
+  }
+  .btn {
+    @apply inline-flex items-center gap-2 rounded-full px-5 py-3 font-semibold transition-all duration-150;
+  }
+  .btn-primary {
+    @apply btn bg-brand-ink text-white hover:bg-brand-red shadow-sm hover:shadow-md;
+  }
+  .btn-secondary {
+    @apply btn bg-white text-brand-ink ring-1 ring-brand-ink/10 hover:ring-brand-ink/30;
+  }
+  .btn-yellow {
+    @apply btn bg-brand-yellow text-brand-ink hover:bg-brand-yellow-deep;
+  }
+  .btn-call {
+    @apply btn bg-brand-red text-white hover:bg-brand-red-deep shadow-sm;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full bg-brand-ink/5 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-brand-ink/70;
+  }
+  .chip-red {
+    @apply chip bg-brand-red/10 text-brand-red;
+  }
+  .chip-yellow {
+    @apply chip bg-brand-yellow text-brand-ink;
+  }
+  .card {
+    @apply rounded-3xl bg-white shadow-card overflow-hidden;
+  }
+  .heading-display {
+    @apply font-display text-[1.65rem] sm:text-5xl md:text-6xl leading-[1.1] tracking-tight;
+    overflow-wrap: anywhere;
+  }
+  .heading-section {
+    @apply font-display text-[1.35rem] sm:text-3xl md:text-4xl lg:text-5xl leading-[1.15] tracking-tight;
+    overflow-wrap: anywhere;
+  }
+  .accent-red {
+    @apply text-brand-red;
+  }
+  .accent-yellow {
+    @apply text-brand-yellow-deep;
+  }
+  .prose-abf {
+    @apply text-[1.05rem] leading-[1.75] text-brand-ink/85;
+  }
+  .prose-abf p {
+    @apply my-5;
+  }
+  .prose-abf h2 {
+    @apply font-display text-3xl mt-12 mb-4;
+  }
+  .prose-abf h3 {
+    @apply font-display text-2xl mt-10 mb-3;
+  }
+  .prose-abf ul {
+    @apply my-5 ml-6 list-disc space-y-2;
+  }
+  .prose-abf ol {
+    @apply my-5 ml-6 list-decimal space-y-2;
+  }
+  .prose-abf strong {
+    @apply font-semibold text-brand-ink;
+  }
+  .prose-abf a {
+    @apply text-brand-red underline-offset-4 hover:underline;
+  }
+  .prose-abf blockquote {
+    @apply my-6 border-l-4 border-brand-yellow pl-5 italic text-brand-ink/80;
+  }
+}
+
+/* Sparkle divider matching the ✦ from the report */
+.sparkle::after {
+  content: "✦";
+  @apply ml-2 text-brand-red;
+}
