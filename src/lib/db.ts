@@ -226,6 +226,12 @@ export async function findDonationByPaymentId(
   return toDonationRow(rows[0] as Record<string, unknown>);
 }
 
+/** Delete a donation row by paymentId. Returns the number of rows deleted (0 or 1). */
+export async function deleteDonationByPaymentId(paymentId: string): Promise<number> {
+  const result = await sql`DELETE FROM donations WHERE payment_id = ${paymentId}`;
+  return result.rowCount ?? 0;
+}
+
 function toDonationRow(r: Record<string, unknown>): DonationRow {
   return {
     id: Number(r.id),
