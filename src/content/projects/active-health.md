@@ -13,7 +13,7 @@ ctaPhone: "+919364024365"
 partners: ["Suvarna Arogya Suraksha Trust (SAST)", "Department of Minorities, Govt of Karnataka"]
 stats:
   - { value: "1,625+", label: "Cases handled" }
-  - { value: "₹3.77 Cr+", label: "Saved for families" }
+  - { value: "₹3.77 Cr+", label: "Saved for community" }
   - { value: "24×7", label: "365 days a year" }
 ---
 
