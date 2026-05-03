@@ -1,4 +1,6 @@
 import PDFDocument from "pdfkit";
+import fs from "node:fs";
+import path from "node:path";
 
 export interface ReceiptData {
   receiptNumber: string;
@@ -29,13 +31,16 @@ const Y = "#FFD23F";
 const R = "#EF4136";
 const INK = "#1A1A1A";
 const MUTED = "#666666";
+const RULE = "#E5E5E5";
+
+const LOGO_PATH = path.join(process.cwd(), "public", "images", "logo.png");
+const LOGO_BUFFER: Buffer | null = fs.existsSync(LOGO_PATH) ? fs.readFileSync(LOGO_PATH) : null;
 
 export function fmtINR(n: number): string {
   return `₹ ${n.toLocaleString("en-IN")}`;
 }
 
 export function inrInWords(n: number): string {
-  // Indian numbering system, integer rupees
   const ones = ["","One","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten","Eleven","Twelve","Thirteen","Fourteen","Fifteen","Sixteen","Seventeen","Eighteen","Nineteen"];
   const tens = ["","","Twenty","Thirty","Forty","Fifty","Sixty","Seventy","Eighty","Ninety"];
   function below100(x: number): string {
@@ -64,48 +69,68 @@ function fmtDate(d: Date): string {
 
 export async function generateReceiptPdf(data: ReceiptData): Promise<Buffer> {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ size: "A4", margin: 50 });
+    // bufferPages:false + autoFirstPage so we control layout strictly on one page.
+    const doc = new PDFDocument({
+      size: "A4",
+      margin: 0,
+      autoFirstPage: true,
+      bufferPages: false,
+    });
     const chunks: Buffer[] = [];
     doc.on("data", (c: Buffer) => chunks.push(c));
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
-    const W = doc.page.width;
+    const W = doc.page.width;   // 595
+    const H = doc.page.height;  // 842
+    const PAD = 40;
+    const CONTENT_W = W - PAD * 2;
 
-    // ===== HEADER =====
-    doc.rect(0, 0, W, 90).fill(Y);
-    doc.fillColor(INK).font("Helvetica-Bold").fontSize(22).text(ABF.legalName, 50, 28);
-    doc.font("Helvetica").fontSize(9).fillColor(INK).text("A people's movement · Section 8 NGO", 50, 58);
-    doc.fontSize(8).text(ABF.address, 50, 72, { width: W - 100 });
+    // ===== HEADER (yellow band, h=88) =====
+    doc.rect(0, 0, W, 88).fill(Y);
+    if (LOGO_BUFFER) {
+      // Logo aspect 1350:485 ≈ 2.78. At height 56 → width ~156.
+      doc.image(LOGO_BUFFER, PAD, 16, { height: 56 });
+    } else {
+      doc.fillColor(INK).font("Helvetica-Bold").fontSize(20).text(ABF.legalName, PAD, 30);
+    }
+    // Right side: tagline + address
+    const rightX = PAD + 180;
+    const rightW = W - rightX - PAD;
+    doc.fillColor(INK).font("Helvetica-Bold").fontSize(11)
+       .text("A People's Movement · Section 8 NPO", rightX, 24, { width: rightW });
+    doc.font("Helvetica").fontSize(8.5).fillColor(INK)
+       .text(ABF.address, rightX, 42, { width: rightW });
 
-    // Title bar
-    doc.fillColor(R).rect(0, 100, W, 32).fill();
-    doc.fillColor("white").font("Helvetica-Bold").fontSize(14)
+    // ===== TITLE STRIP (red, h=28) =====
+    doc.rect(0, 88, W, 28).fill(R);
+    doc.fillColor("white").font("Helvetica-Bold").fontSize(11)
        .text("DONATION RECEIPT — Eligible for deduction U/S 80G of the Income Tax Act, 1961",
-             50, 110, { width: W - 100, align: "center" });
+             PAD, 96, { width: CONTENT_W, align: "center" });
 
-    let cursor = 160;
+    let cursor = 132;
 
-    // ===== RECEIPT META =====
-    const metaRows = [
+    // ===== RECEIPT META (3 rows compact) =====
+    const meta: [string, string][] = [
       ["Receipt No.", data.receiptNumber],
       ["Date", fmtDate(data.donatedAt)],
       ["Payment ID", data.paymentId],
     ];
-    doc.fontSize(10).fillColor(INK);
-    metaRows.forEach(([k, v]) => {
-      doc.font("Helvetica").fillColor(MUTED).text(k, 50, cursor, { width: 110 });
-      doc.font("Helvetica-Bold").fillColor(INK).text(v, 160, cursor);
-      cursor += 16;
+    doc.fontSize(10);
+    meta.forEach(([k, v]) => {
+      doc.font("Helvetica").fillColor(MUTED).text(k, PAD, cursor, { width: 100 });
+      doc.font("Helvetica-Bold").fillColor(INK).text(v, PAD + 110, cursor);
+      cursor += 15;
     });
 
-    cursor += 8;
-    doc.moveTo(50, cursor).lineTo(W - 50, cursor).strokeColor("#E5E5E5").stroke();
-    cursor += 14;
+    cursor += 6;
+    rule(doc, PAD, cursor, W - PAD);
+    cursor += 12;
 
-    // ===== DONOR DETAILS =====
-    doc.font("Helvetica-Bold").fontSize(11).fillColor(INK).text("Received with thanks from:", 50, cursor);
-    cursor += 18;
+    // ===== DONOR DETAILS (height-aware) =====
+    doc.font("Helvetica-Bold").fontSize(10.5).fillColor(INK)
+       .text("Received with thanks from:", PAD, cursor);
+    cursor += 16;
 
     const donorRows: [string, string][] = [
       ["Name", data.donor.name],
@@ -115,40 +140,51 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Buffer> {
     if (data.donor.pan)     donorRows.push(["PAN", data.donor.pan.toUpperCase()]);
     if (data.donor.address) donorRows.push(["Address", data.donor.address]);
 
+    const VAL_X = PAD + 110;
+    const VAL_W = W - VAL_X - PAD;
     doc.fontSize(10);
     donorRows.forEach(([k, v]) => {
-      doc.font("Helvetica").fillColor(MUTED).text(k, 50, cursor, { width: 110 });
-      doc.font("Helvetica-Bold").fillColor(INK).text(v, 160, cursor, { width: W - 200 });
-      const h = doc.heightOfString(v, { width: W - 200 });
-      cursor += Math.max(16, h + 4);
+      doc.font("Helvetica").fillColor(MUTED).text(k, PAD, cursor, { width: 100 });
+      doc.font("Helvetica-Bold").fillColor(INK).text(v, VAL_X, cursor, { width: VAL_W });
+      const h = doc.heightOfString(v, { width: VAL_W });
+      cursor += Math.max(14, h + 3);
     });
 
-    cursor += 8;
-    doc.moveTo(50, cursor).lineTo(W - 50, cursor).strokeColor("#E5E5E5").stroke();
-    cursor += 16;
-
-    // ===== AMOUNT BLOCK =====
-    doc.rect(50, cursor, W - 100, 70).fillAndStroke(Y, "#E5C200");
-    doc.font("Helvetica").fontSize(10).fillColor(INK).text("Amount donated", 65, cursor + 12);
-    doc.font("Helvetica-Bold").fontSize(28).fillColor(INK).text(fmtINR(data.amountInr), 65, cursor + 26);
-    doc.font("Helvetica-Oblique").fontSize(10).fillColor(INK)
-       .text(`(Rupees in words: ${inrInWords(data.amountInr)})`, 65, cursor + 56, { width: W - 130 });
-    cursor += 90;
-
-    // ===== PURPOSE =====
-    doc.font("Helvetica").fontSize(10).fillColor(INK)
-       .text("Purpose: Voluntary contribution towards the charitable activities of " + ABF.legalName +
-             " — including healthcare access, education, drug de-addiction, water relief, " +
-             "scheme awareness, and community welfare programmes across Karnataka.",
-             50, cursor, { width: W - 100, align: "left" });
-    cursor += 50;
-
-    // ===== LEGAL =====
-    doc.moveTo(50, cursor).lineTo(W - 50, cursor).strokeColor("#E5E5E5").stroke();
+    cursor += 6;
+    rule(doc, PAD, cursor, W - PAD);
     cursor += 12;
 
-    doc.font("Helvetica-Bold").fontSize(10).fillColor(INK).text("Tax exemption details", 50, cursor);
-    cursor += 16;
+    // ===== AMOUNT BLOCK (yellow card, height-aware for words) =====
+    const wordsText = `(Rupees in words: ${inrInWords(data.amountInr)})`;
+    const wordsH = doc.font("Helvetica-Oblique").fontSize(9.5)
+      .heightOfString(wordsText, { width: CONTENT_W - 30 });
+    const amtCardH = 14 + 28 + 6 + wordsH + 12; // top pad + amount + gap + words + bottom pad
+
+    doc.rect(PAD, cursor, CONTENT_W, amtCardH).fillAndStroke(Y, "#E5C200");
+    doc.font("Helvetica").fontSize(9.5).fillColor(INK)
+       .text("AMOUNT DONATED", PAD + 15, cursor + 10, { characterSpacing: 1.2 });
+    doc.font("Helvetica-Bold").fontSize(26).fillColor(INK)
+       .text(fmtINR(data.amountInr), PAD + 15, cursor + 24);
+    doc.font("Helvetica-Oblique").fontSize(9.5).fillColor(INK)
+       .text(wordsText, PAD + 15, cursor + 24 + 28 + 4, { width: CONTENT_W - 30 });
+    cursor += amtCardH + 12;
+
+    // ===== PURPOSE (height-aware) =====
+    const purpose = "Purpose: Voluntary contribution towards the charitable activities of " +
+      ABF.legalName + " — healthcare access, education, drug de-addiction, water relief, " +
+      "scheme awareness, and community welfare programmes across Karnataka.";
+    doc.font("Helvetica").fontSize(9.5).fillColor(INK);
+    const purposeH = doc.heightOfString(purpose, { width: CONTENT_W });
+    doc.text(purpose, PAD, cursor, { width: CONTENT_W });
+    cursor += purposeH + 10;
+
+    rule(doc, PAD, cursor, W - PAD);
+    cursor += 10;
+
+    // ===== TAX EXEMPTION =====
+    doc.font("Helvetica-Bold").fontSize(10).fillColor(INK)
+       .text("Tax exemption details", PAD, cursor);
+    cursor += 14;
     doc.font("Helvetica").fontSize(9).fillColor(INK);
     const legal = [
       `PAN of ${ABF.legalName}: ${ABF.pan}`,
@@ -158,26 +194,41 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Buffer> {
       "This donation is eligible for deduction under Section 80G of the Income Tax Act, 1961.",
     ];
     legal.forEach((line) => {
-      doc.text(line, 50, cursor, { width: W - 100 });
-      cursor += 13;
+      const lh = doc.heightOfString(line, { width: CONTENT_W });
+      doc.text(line, PAD, cursor, { width: CONTENT_W });
+      cursor += Math.max(12, lh + 1);
     });
 
-    // ===== SIGNATURE =====
-    cursor += 30;
-    doc.font("Helvetica").fontSize(10).fillColor(INK)
-       .text("For " + ABF.legalName, W - 230, cursor, { width: 180, align: "right" });
-    cursor += 40;
-    doc.moveTo(W - 230, cursor).lineTo(W - 50, cursor).strokeColor(INK).stroke();
-    cursor += 5;
-    doc.font("Helvetica-Bold").fontSize(10).text(ABF.signatoryName, W - 230, cursor, { width: 180, align: "right" });
-    cursor += 13;
-    doc.font("Helvetica").fontSize(8).fillColor(MUTED).text(ABF.signatoryTitle, W - 230, cursor, { width: 180, align: "right" });
+    // ===== SIGNATURE (bottom-right, fixed Y so it doesn't drift) =====
+    // Reserve a fixed sig zone so layout stays stable even if content above varies.
+    const sigBaseY = Math.max(cursor + 24, H - 130);
+    const sigW = 200;
+    const sigX = W - PAD - sigW;
+    doc.font("Helvetica").fontSize(9.5).fillColor(INK)
+       .text(`For ${ABF.legalName}`, sigX, sigBaseY, { width: sigW, align: "right" });
+    const lineY = sigBaseY + 38;
+    doc.moveTo(sigX, lineY).lineTo(sigX + sigW, lineY).strokeColor(INK).stroke();
+    doc.font("Helvetica-Bold").fontSize(10).fillColor(INK)
+       .text(ABF.signatoryName, sigX, lineY + 4, { width: sigW, align: "right" });
+    doc.font("Helvetica").fontSize(8.5).fillColor(MUTED)
+       .text(ABF.signatoryTitle, sigX, lineY + 18, { width: sigW, align: "right" });
 
-    // ===== FOOTER =====
-    doc.fontSize(8).fillColor(MUTED)
-       .text("This is a system-generated receipt. For queries: activebengaluru@gmail.com · +91 93640 24365 · www.activebengaluru.org",
-             50, doc.page.height - 50, { width: W - 100, align: "center" });
+    // ===== FOOTER (pinned absolute bottom, single line) =====
+    const footY = H - 32;
+    rule(doc, PAD, footY - 10, W - PAD);
+    doc.font("Helvetica").fontSize(8).fillColor(MUTED)
+       .text("System-generated receipt · activebengaluru@gmail.com · +91 93640 24365 · www.activebengaluru.org",
+             PAD, footY, { width: CONTENT_W, align: "center", lineBreak: false });
+
+    // Hard guard: if we drifted past the footer rule, that's a bug.
+    if (cursor > footY - 140) {
+      console.warn(`[receipt] content cursor=${cursor} is encroaching on signature/footer zone (footY=${footY}). Layout may overlap.`);
+    }
 
     doc.end();
   });
+}
+
+function rule(doc: PDFKit.PDFDocument, x1: number, y: number, x2: number) {
+  doc.moveTo(x1, y).lineTo(x2, y).strokeColor(RULE).lineWidth(0.5).stroke();
 }

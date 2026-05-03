@@ -59,7 +59,7 @@ export const GET: APIRoute = async ({ url }) => {
   }
 
   const safeFilename = row.receiptNumber.replace(/[^a-zA-Z0-9.-]/g, "-");
-  return new Response(pdf, {
+  return new Response(new Uint8Array(pdf), {
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename="${safeFilename}.pdf"`,

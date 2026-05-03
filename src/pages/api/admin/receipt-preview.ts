@@ -25,7 +25,7 @@ export const GET: APIRoute = async () => {
     paymentId: "pay_SamplePaymentID00",
   });
 
-  return new Response(pdf, {
+  return new Response(new Uint8Array(pdf), {
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": 'inline; filename="ABF-receipt-preview.pdf"',

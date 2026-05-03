@@ -53,7 +53,8 @@ function pool() {
 }
 
 // Tagged-template wrapper so the rest of this file reads identically to `sql\`...\``
-const sql = ((strings: TemplateStringsArray, ...values: unknown[]) =>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const sql = ((strings: TemplateStringsArray, ...values: any[]) =>
   pool().sql(strings, ...values)) as ReturnType<typeof createPool>["sql"];
 
 export interface DonationRow {
