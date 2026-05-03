@@ -4,6 +4,14 @@ How to wire up Razorpay payments + 80G receipts + email + admin dashboard.
 
 This is a one-time setup. Follow each step in order. Total time: **~45 minutes** if you have all your details handy.
 
+> **💡 Want to see what the 80G receipt PDF looks like first?** After you set the `ADMIN_PASSWORD` env var (step 4 below) and redeploy, visit:
+> ```
+> https://activebengaluru.org/api/admin/receipt-preview
+> ```
+> You'll get the basic-auth prompt, then the browser will display a sample receipt PDF — no donation needed. Use this to review the design before going live.
+
+> **💡 Need to re-send a past donor's receipt?** Visit `/admin/donations` → click the "⬇ PDF" link next to their row. The exact same PDF that was originally emailed will download.
+
 ---
 
 ## 0. What you need before you start

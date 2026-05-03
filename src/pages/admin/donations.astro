@@ -12,8 +12,9 @@ export const prerender = false;
         <h1 class="font-display text-3xl sm:text-4xl mt-3">Donations</h1>
         <p class="mt-1 text-sm text-brand-ink/60">Live from the Google Sheet via webhook</p>
       </div>
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-3 flex-wrap">
         <span id="totals" class="text-sm font-semibold text-brand-ink/70">Loading…</span>
+        <a href="/api/admin/receipt-preview" target="_blank" rel="noopener" class="btn-secondary text-sm">Preview receipt template →</a>
         <button id="refreshBtn" class="btn-secondary text-sm">Refresh</button>
       </div>
     </div>
@@ -33,6 +34,7 @@ export const prerender = false;
               <th class="px-3 py-3 font-semibold">Email</th>
               <th class="px-3 py-3 font-semibold">PAN</th>
               <th class="px-3 py-3 font-semibold">Payment ID</th>
+              <th class="px-3 py-3 font-semibold">Receipt</th>
             </tr>
           </thead>
           <tbody id="tbody" class="divide-y divide-brand-ink/5"></tbody>
@@ -90,8 +92,9 @@ export const prerender = false;
             <td class="px-3 py-2.5 text-brand-ink/70 break-all">${escapeHtml(r.donorEmail || "")}</td>
             <td class="px-3 py-2.5 font-mono text-xs">${escapeHtml(r.donorPan || "—")}</td>
             <td class="px-3 py-2.5 font-mono text-xs"><a class="text-brand-red hover:underline" target="_blank" href="https://dashboard.razorpay.com/app/payments/${encodeURIComponent(r.paymentId)}">${escapeHtml(r.paymentId)}</a></td>
+            <td class="px-3 py-2.5 whitespace-nowrap"><a class="inline-flex items-center gap-1 text-brand-red hover:underline font-semibold text-xs" href="/api/admin/receipt?paymentId=${encodeURIComponent(r.paymentId)}">⬇ PDF</a></td>
           </tr>
-        `).join("") || `<tr><td colspan="7" class="px-3 py-8 text-center text-brand-ink/55">No donations yet.</td></tr>`;
+        `).join("") || `<tr><td colspan="8" class="px-3 py-8 text-center text-brand-ink/55">No donations yet.</td></tr>`;
 
         $("loading").classList.add("hidden");
         $("tableWrap").classList.remove("hidden");
