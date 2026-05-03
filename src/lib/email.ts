@@ -54,7 +54,7 @@ export async function sendDonorReceipt(p: SendReceiptParams) {
       </p>
     </div>
   `;
-  return client().emails.send({
+  const res = await client().emails.send({
     from: FROM_EMAIL,
     to: p.donorEmail,
     replyTo: REPLY_TO,
@@ -65,6 +65,10 @@ export async function sendDonorReceipt(p: SendReceiptParams) {
       content: p.pdfBuffer,
     }],
   });
+  if (res.error) {
+    throw new Error(`Resend (donor) failed: ${res.error.name} — ${res.error.message}`);
+  }
+  return res;
 }
 
 export interface SendFinanceParams {
@@ -99,7 +103,7 @@ export async function sendFinanceNotification(p: SendFinanceParams) {
       </p>
     </div>
   `;
-  return client().emails.send({
+  const res = await client().emails.send({
     from: FROM_EMAIL,
     to: recipients,
     subject: `[Donation ₹${p.amountInr.toLocaleString("en-IN")}] ${p.donorName} · ${p.receiptNumber}`,
@@ -109,6 +113,10 @@ export async function sendFinanceNotification(p: SendFinanceParams) {
       content: p.pdfBuffer,
     }],
   });
+  if (res.error) {
+    throw new Error(`Resend (finance) failed: ${res.error.name} — ${res.error.message}`);
+  }
+  return res;
 }
 
 function escapeHtml(s: string): string {
