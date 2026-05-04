@@ -11,9 +11,17 @@ const accentClasses = {
   red: "bg-brand-red text-white",
   ink: "bg-brand-ink text-white",
 };
+
+// Scale font size based on value length so long phrases like "Community-led"
+// or "Multi-stakeholder" don't overflow the card on mobile.
+const len = value.length;
+const valueSize =
+  len <= 8  ? "text-[clamp(1.5rem,5vw,2.25rem)]"
+: len <= 14 ? "text-[clamp(1.15rem,3.6vw,1.5rem)]"
+:             "text-[clamp(1rem,3vw,1.25rem)]";
 ---
 
-<div class={`rounded-2xl p-5 ${accentClasses[accent]}`}>
-  <div class="font-display text-3xl sm:text-4xl tabular-nums leading-none">{value}</div>
-  <div class="mt-2 text-xs uppercase tracking-wider opacity-75">{label}</div>
+<div class={`rounded-2xl p-4 sm:p-5 flex flex-col h-full ${accentClasses[accent]}`}>
+  <div class={`font-display ${valueSize} tabular-nums leading-tight [overflow-wrap:anywhere] hyphens-auto`}>{value}</div>
+  <div class="mt-auto pt-2 text-[10px] sm:text-xs uppercase tracking-wider opacity-75 leading-snug">{label}</div>
 </div>
