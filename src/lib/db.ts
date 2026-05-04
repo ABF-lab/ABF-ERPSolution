@@ -57,6 +57,8 @@ function pool() {
 const sql = ((strings: TemplateStringsArray, ...values: any[]) =>
   pool().sql(strings, ...values)) as ReturnType<typeof createPool>["sql"];
 
+export type DonorCategory = "general" | "zakat" | "sadqa" | "interest";
+
 export interface DonationRow {
   id: number;
   receiptNumber: string;
@@ -68,6 +70,7 @@ export interface DonationRow {
   donorPhone?: string;
   donorPan?: string;
   donorAddress?: string;
+  donorCategory: DonorCategory;
   donatedAt: string; // ISO
 }
 
@@ -80,7 +83,16 @@ export interface InsertDonationInput {
   donorPhone?: string;
   donorPan?: string;
   donorAddress?: string;
+  donorCategory?: DonorCategory;
   donatedAt: Date;
+}
+
+const VALID_CATEGORIES: ReadonlySet<DonorCategory> = new Set(["general", "zakat", "sadqa", "interest"]);
+
+/** Coerce any incoming string to a valid DonorCategory; defaults to "general". */
+export function normaliseCategory(raw: unknown): DonorCategory {
+  const v = String(raw || "").toLowerCase().trim();
+  return VALID_CATEGORIES.has(v as DonorCategory) ? (v as DonorCategory) : "general";
 }
 
 /** Indian fiscal year label, e.g. "2025-26" for any date between 1 Apr 2025 and 31 Mar 2026. */
@@ -118,6 +130,11 @@ export async function initSchema(): Promise<void> {
       last_number INT NOT NULL DEFAULT 0
     )
   `;
+  // Migration: donor_category column. Existing rows get 'general'.
+  await sql`
+    ALTER TABLE donations
+    ADD COLUMN IF NOT EXISTS donor_category TEXT NOT NULL DEFAULT 'general'
+  `;
 }
 
 /**
@@ -154,16 +171,17 @@ export async function insertDonation(
   }
 
   const receiptNumber = await nextReceiptNumber(input.donatedAt);
+  const category = input.donorCategory || "general";
   await sql`
     INSERT INTO donations (
       receipt_number, payment_id, order_id, amount_inr,
       donor_name, donor_email, donor_phone, donor_pan, donor_address,
-      donated_at
+      donor_category, donated_at
     ) VALUES (
       ${receiptNumber}, ${input.paymentId}, ${input.orderId}, ${input.amountInr},
       ${input.donorName}, ${input.donorEmail}, ${input.donorPhone || null},
       ${input.donorPan || null}, ${input.donorAddress || null},
-      ${input.donatedAt.toISOString()}
+      ${category}, ${input.donatedAt.toISOString()}
     )
   `;
   return { receiptNumber };
@@ -173,16 +191,17 @@ export async function insertDonation(
 export async function manualInsertDonation(
   input: InsertDonationInput & { receiptNumber: string }
 ): Promise<void> {
+  const category = input.donorCategory || "general";
   await sql`
     INSERT INTO donations (
       receipt_number, payment_id, order_id, amount_inr,
       donor_name, donor_email, donor_phone, donor_pan, donor_address,
-      donated_at
+      donor_category, donated_at
     ) VALUES (
       ${input.receiptNumber}, ${input.paymentId}, ${input.orderId}, ${input.amountInr},
       ${input.donorName}, ${input.donorEmail}, ${input.donorPhone || null},
       ${input.donorPan || null}, ${input.donorAddress || null},
-      ${input.donatedAt.toISOString()}
+      ${category}, ${input.donatedAt.toISOString()}
     )
   `;
 }
@@ -200,11 +219,12 @@ export async function listDonations(): Promise<DonationRow[]> {
     donor_phone: string | null;
     donor_pan: string | null;
     donor_address: string | null;
+    donor_category: string | null;
     donated_at: Date;
   }>`
     SELECT id, receipt_number, payment_id, order_id, amount_inr,
            donor_name, donor_email, donor_phone, donor_pan, donor_address,
-           donated_at
+           donor_category, donated_at
     FROM donations
     ORDER BY donated_at DESC, id DESC
   `;
@@ -218,7 +238,7 @@ export async function findDonationByPaymentId(
   const { rows } = await sql`
     SELECT id, receipt_number, payment_id, order_id, amount_inr,
            donor_name, donor_email, donor_phone, donor_pan, donor_address,
-           donated_at
+           donor_category, donated_at
     FROM donations
     WHERE payment_id = ${paymentId}
     LIMIT 1
@@ -245,6 +265,7 @@ function toDonationRow(r: Record<string, unknown>): DonationRow {
     donorPhone: r.donor_phone ? String(r.donor_phone) : undefined,
     donorPan: r.donor_pan ? String(r.donor_pan) : undefined,
     donorAddress: r.donor_address ? String(r.donor_address) : undefined,
+    donorCategory: normaliseCategory(r.donor_category),
     donatedAt: (r.donated_at instanceof Date
       ? r.donated_at
       : new Date(String(r.donated_at))

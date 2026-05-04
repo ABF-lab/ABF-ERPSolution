@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { manualInsertDonation, findDonationByPaymentId } from "../../../lib/db";
+import { manualInsertDonation, findDonationByPaymentId, normaliseCategory } from "../../../lib/db";
 import { generateReceiptPdf } from "../../../lib/receipt";
 import { sendDonorReceipt } from "../../../lib/email";
 
@@ -48,6 +48,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     const donatedAt = new Date(body.donatedAt);
     const amountInr = Number(body.amountInr);
+    const donorCategory = normaliseCategory(body.donorCategory);
 
     await manualInsertDonation({
       receiptNumber: body.receiptNumber,
@@ -59,6 +60,7 @@ export const POST: APIRoute = async ({ request }) => {
       donorPhone: body.donorPhone || undefined,
       donorPan: body.donorPan || undefined,
       donorAddress: body.donorAddress || undefined,
+      donorCategory,
       donatedAt,
     });
 
@@ -74,6 +76,7 @@ export const POST: APIRoute = async ({ request }) => {
       },
       amountInr,
       paymentId: body.paymentId,
+      donorCategory,
     });
 
     let emailError: string | null = null;

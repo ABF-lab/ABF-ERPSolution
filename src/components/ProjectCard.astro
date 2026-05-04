@@ -22,7 +22,7 @@ const {
 <a
   href={href}
   class:list={[
-    "group block card hover:shadow-card-lg transition-all duration-200 hover:-translate-y-0.5",
+    "group card flex h-full flex-col hover:shadow-card-lg transition-all duration-200 hover:-translate-y-0.5",
     flagship && "ring-2 ring-brand-red",
   ]}
 >
@@ -34,10 +34,10 @@ const {
     badge={badge}
     flagship={flagship}
   />
-  <div class="p-6 bg-white">
+  <div class="p-6 bg-white flex flex-1 flex-col">
     {tagline && <p class="text-sm font-semibold text-brand-red leading-snug">{tagline}</p>}
     <p class="mt-3 text-brand-ink/75 text-[0.95rem] leading-relaxed line-clamp-3">{summary}</p>
-    <span class="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-ink group-hover:text-brand-red">
+    <span class="mt-auto pt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-ink group-hover:text-brand-red">
       Read more <span aria-hidden="true">→</span>
     </span>
   </div>

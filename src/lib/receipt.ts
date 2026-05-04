@@ -2,6 +2,15 @@ import PDFDocument from "pdfkit";
 import fs from "node:fs";
 import path from "node:path";
 
+export type DonorCategory = "general" | "zakat" | "sadqa" | "interest";
+
+const CATEGORY_LABEL: Record<DonorCategory, string> = {
+  general: "General",
+  zakat: "Zakat",
+  sadqa: "Sadqa",
+  interest: "Interest Money",
+};
+
 export interface ReceiptData {
   receiptNumber: string;
   donatedAt: Date;
@@ -14,6 +23,7 @@ export interface ReceiptData {
   };
   amountInr: number;
   paymentId: string;
+  donorCategory?: DonorCategory;
 }
 
 const ABF = {
@@ -35,6 +45,9 @@ const RULE = "#E5E5E5";
 
 const LOGO_PATH = path.join(process.cwd(), "public", "images", "logo.png");
 const LOGO_BUFFER: Buffer | null = fs.existsSync(LOGO_PATH) ? fs.readFileSync(LOGO_PATH) : null;
+
+const STAMP_PATH = path.join(process.cwd(), "public", "images", "signature-stamp.png");
+const STAMP_BUFFER: Buffer | null = fs.existsSync(STAMP_PATH) ? fs.readFileSync(STAMP_PATH) : null;
 
 export function fmtINR(n: number): string {
   return `₹ ${n.toLocaleString("en-IN")}`;
@@ -176,7 +189,17 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Buffer> {
     doc.font("Helvetica").fontSize(9.5).fillColor(INK);
     const purposeH = doc.heightOfString(purpose, { width: CONTENT_W });
     doc.text(purpose, PAD, cursor, { width: CONTENT_W });
-    cursor += purposeH + 10;
+    cursor += purposeH + 6;
+
+    // Category line — only render when the donor explicitly chose a non-general category.
+    const cat = data.donorCategory || "general";
+    if (cat !== "general") {
+      doc.font("Helvetica-Bold").fontSize(9.5).fillColor(INK)
+         .text(`Category: ${CATEGORY_LABEL[cat]}`, PAD, cursor, { width: CONTENT_W });
+      cursor += 14;
+    } else {
+      cursor += 4;
+    }
 
     rule(doc, PAD, cursor, W - PAD);
     cursor += 10;
@@ -201,12 +224,21 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Buffer> {
 
     // ===== SIGNATURE (bottom-right, fixed Y so it doesn't drift) =====
     // Reserve a fixed sig zone so layout stays stable even if content above varies.
-    const sigBaseY = Math.max(cursor + 24, H - 130);
+    const sigBaseY = Math.max(cursor + 24, H - 150);
     const sigW = 200;
     const sigX = W - PAD - sigW;
     doc.font("Helvetica").fontSize(9.5).fillColor(INK)
        .text(`For ${ABF.legalName}`, sigX, sigBaseY, { width: sigW, align: "right" });
-    const lineY = sigBaseY + 38;
+
+    // Embed the authorised-signatory stamp image if available; otherwise fall back to a plain underline.
+    if (STAMP_BUFFER) {
+      // Stamp ~ square, render at h=72 to fit the sig zone, right-aligned within sigW.
+      const stampH = 72;
+      const stampW = 72; // approximate square crop; pdfkit will preserve aspect via fit
+      doc.image(STAMP_BUFFER, sigX + sigW - stampW, sigBaseY + 14, { fit: [stampW, stampH] });
+    }
+
+    const lineY = sigBaseY + 92;
     doc.moveTo(sigX, lineY).lineTo(sigX + sigW, lineY).strokeColor(INK).stroke();
     doc.font("Helvetica-Bold").fontSize(10).fillColor(INK)
        .text(ABF.signatoryName, sigX, lineY + 4, { width: sigW, align: "right" });

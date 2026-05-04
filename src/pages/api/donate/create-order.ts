@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { razorpayClient } from "../../../lib/razorpay";
+import { normaliseCategory } from "../../../lib/db";
 
 export const prerender = false;
 
@@ -29,6 +30,8 @@ export const POST: APIRoute = async ({ request }) => {
     if (!name || name.length < 2) return json({ error: "Please enter your name" }, 400);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "Please enter a valid email" }, 400);
 
+    const donorCategory = normaliseCategory(body.donorCategory);
+
     const order = await razorpayClient().orders.create({
       amount: Math.round(amountInr * 100), // paise
       currency: "INR",
@@ -39,6 +42,7 @@ export const POST: APIRoute = async ({ request }) => {
         donorPhone: String(body.donorPhone || ""),
         donorPan: pan,
         donorAddress: String(body.donorAddress || ""),
+        donorCategory,
       },
     });
 

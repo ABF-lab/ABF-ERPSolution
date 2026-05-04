@@ -50,6 +50,7 @@ export const GET: APIRoute = async ({ url }) => {
       },
       amountInr: row.amountInr,
       paymentId: row.paymentId,
+      donorCategory: row.donorCategory,
     });
   } catch (err) {
     return text(

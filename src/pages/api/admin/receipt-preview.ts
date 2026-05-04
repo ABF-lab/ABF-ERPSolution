@@ -23,6 +23,7 @@ export const GET: APIRoute = async () => {
     },
     amountInr: 5000,
     paymentId: "pay_SamplePaymentID00",
+    donorCategory: "zakat",
   });
 
   return new Response(new Uint8Array(pdf), {

@@ -61,6 +61,16 @@ export const prerender = true;
             <label class="block text-sm font-semibold text-brand-ink mb-1.5">Phone</label>
             <input id="phoneInput" type="tel" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none" placeholder="+91 …" />
           </div>
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-semibold text-brand-ink mb-1.5">Category</label>
+            <select id="categoryInput" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none bg-white">
+              <option value="general" selected>General</option>
+              <option value="zakat">Zakat</option>
+              <option value="sadqa">Sadqa</option>
+              <option value="interest">Interest Money</option>
+            </select>
+            <p class="mt-1 text-xs text-brand-ink/55">Helps us allocate your contribution correctly. Shown on the 80G receipt.</p>
+          </div>
           <div id="panRow" class="sm:col-span-2 hidden">
             <label class="block text-sm font-semibold text-brand-ink mb-1.5">PAN <span class="text-brand-red">*</span></label>
             <input id="panInput" type="text" maxlength="10" pattern="[A-Za-z]{5}[0-9]{4}[A-Za-z]{1}" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none uppercase font-mono" placeholder="ABCDE1234F" />
@@ -147,6 +157,7 @@ export const prerender = true;
     const nameInput = document.getElementById("nameInput") as HTMLInputElement;
     const emailInput = document.getElementById("emailInput") as HTMLInputElement;
     const phoneInput = document.getElementById("phoneInput") as HTMLInputElement;
+    const categoryInput = document.getElementById("categoryInput") as HTMLSelectElement;
     const panInput = document.getElementById("panInput") as HTMLInputElement;
     const addressInput = document.getElementById("addressInput") as HTMLTextAreaElement;
     const panRow = document.getElementById("panRow")!;
@@ -199,6 +210,7 @@ export const prerender = true;
         donorName: nameInput.value.trim(),
         donorEmail: emailInput.value.trim(),
         donorPhone: phoneInput.value.trim(),
+        donorCategory: categoryInput.value,
         donorPan: panInput.value.trim().toUpperCase(),
         donorAddress: addressInput.value.trim(),
       };

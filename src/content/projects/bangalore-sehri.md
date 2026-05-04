@@ -1,6 +1,6 @@
 ---
 title: "BangaloreSehri.in"
-tagline: "The last meal before the sun rises — for everyone, no matter where they live."
+tagline: "The last meal before the Dawn — for everyone, no matter where they live."
 summary: "A Ramadan-time platform that maps Sehri providers across Bengaluru. From a digital solution in 2024 to a movement that fed 50,000+ people daily by 2026."
 heroImage: "/images/projects/bangalore-sehri.jpg"
 thumbnailIcon: "mosque"

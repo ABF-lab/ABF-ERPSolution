@@ -6,20 +6,18 @@ heroImage: "/images/projects/mission-nodropout.jpg"
 thumbnailIcon: "book"
 thumbnailAccent: "yellow"
 status: "ongoing"
-order: 3
+order: 5
 stats:
   - { value: "1,000+", label: "Students supported" }
   - { value: "23", label: "Coaching centres across Bengaluru" }
   - { value: "63.4%", label: "SSLC-2 pass rate (vs 28% state avg)" }
 ---
 
-In Karnataka, Class 10 SSLC exam failures disproportionately fall on children from underprivileged backgrounds. The state's Schedule Tribe (ST) and Schedule Caste (SC) pass rates lag the overall rate by a wide margin. For most of these students, "failing" becomes "dropping out."
-
-Mission NoDropOut refuses that ending.
+Mission NoDropOut is ABF's response to one of Karnataka's quietest crises — students who fail the SSLC exam and silently disappear from the education system.
 
 ## What we do
 
-For the four-week window between SSLC results and the supplementary exam, ABF runs **free preparatory classes across 23 coaching centres in Bengaluru**, focused on the high-fail subjects: **Kannada, science, and mathematics**. Most students who attend are first-generation learners. Many are working children. Many had given up entirely after the first result came in.
+For the four-week window between SSLC results and the supplementary exam, ABF runs **free preparatory classes across 23 coaching centres in Bengaluru**, focused on the high-fail subjects: **Kannada, science, and mathematics**.
 
 In April–May 2025, around **1,000 students** participated. The pass rate was **63.4%** — more than double the state average for SSLC-2 candidates.
 

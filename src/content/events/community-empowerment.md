@@ -5,7 +5,7 @@ summary: "Two consultative sessions in February and March 2025 educated communit
 heroImage: "/images/events/community-empowerment.jpg"
 thumbnailIcon: "megaphone"
 thumbnailAccent: "yellow"
-location: "Noorani Masjid (Ilyas Nagar) · Trillium PU College (Hegdenagar) · Lonasters Convention Hall (Billwardahalli)"
+location: "Noorani Masjid (Ilyas Nagar) · Trillium PU College (Hegdenagar)"
 occurredOn: "February – March 2025"
 status: "concluded"
 order: 9
@@ -24,7 +24,6 @@ ABF led a powerful awareness drive, educating communities on **vital government 
 ## Sessions held
 
 - **7 February 2025** — Noorani Masjid, Ilyas Nagar (after Maghrib prayer)
-- **16 March 2025** — Lonasters Convention Hall, Billwardahalli
 - **23 March 2025** — Trillium PU College, Hegdenagar
 
 The two-track design was deliberate. The same families wrestling with addiction in their household are often unaware of the welfare and counselling support that exists for them. We chose to talk about both in the same room.

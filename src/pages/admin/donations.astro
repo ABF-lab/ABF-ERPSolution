@@ -31,6 +31,7 @@ export const prerender = false;
               <th class="px-3 py-3 font-semibold">Receipt #</th>
               <th class="px-3 py-3 font-semibold text-right whitespace-nowrap">Amount</th>
               <th class="px-3 py-3 font-semibold">Donor</th>
+              <th class="px-3 py-3 font-semibold">Category</th>
               <th class="px-3 py-3 font-semibold">Email</th>
               <th class="px-3 py-3 font-semibold">PAN</th>
               <th class="px-3 py-3 font-semibold">Payment ID</th>
@@ -53,8 +54,15 @@ export const prerender = false;
       donorEmail: string;
       donorPhone?: string;
       donorPan?: string;
+      donorCategory?: string;
       donatedAt: string;
     }
+    const CATEGORY_LABEL: Record<string, string> = {
+      general: "General",
+      zakat: "Zakat",
+      sadqa: "Sadqa",
+      interest: "Interest",
+    };
 
     const $ = (id: string) => document.getElementById(id)!;
     const fmtINR = (n: number) => `₹ ${n.toLocaleString("en-IN")}`;
@@ -89,12 +97,13 @@ export const prerender = false;
             <td class="px-3 py-2.5 font-mono text-xs">${escapeHtml(r.receiptNumber)}</td>
             <td class="px-3 py-2.5 text-right font-display whitespace-nowrap">${fmtINR(Number(r.amountInr) || 0)}</td>
             <td class="px-3 py-2.5 font-semibold">${escapeHtml(r.donorName || "")}</td>
+            <td class="px-3 py-2.5 text-brand-ink/80">${escapeHtml(CATEGORY_LABEL[r.donorCategory || "general"] || "General")}</td>
             <td class="px-3 py-2.5 text-brand-ink/70 break-all">${escapeHtml(r.donorEmail || "")}</td>
             <td class="px-3 py-2.5 font-mono text-xs">${escapeHtml(r.donorPan || "—")}</td>
             <td class="px-3 py-2.5 font-mono text-xs"><a class="text-brand-red hover:underline" target="_blank" href="https://dashboard.razorpay.com/app/payments/${encodeURIComponent(r.paymentId)}">${escapeHtml(r.paymentId)}</a></td>
             <td class="px-3 py-2.5 whitespace-nowrap"><a class="inline-flex items-center gap-1 text-brand-red hover:underline font-semibold text-xs" href="/api/admin/receipt?paymentId=${encodeURIComponent(r.paymentId)}">⬇ PDF</a></td>
           </tr>
-        `).join("") || `<tr><td colspan="8" class="px-3 py-8 text-center text-brand-ink/55">No donations yet.</td></tr>`;
+        `).join("") || `<tr><td colspan="9" class="px-3 py-8 text-center text-brand-ink/55">No donations yet.</td></tr>`;
 
         $("loading").classList.add("hidden");
         $("tableWrap").classList.remove("hidden");

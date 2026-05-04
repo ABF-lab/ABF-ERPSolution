@@ -10,7 +10,7 @@ status: "ongoing"
 flagship: true
 order: 1
 ctaPhone: "+919364024365"
-partners: ["Suvarna Arogya Suraksha Trust (SAST)", "Department of Minorities, Govt of Karnataka"]
+partners: ["Suvarna Arogya Suraksha Trust (SAST)", "Department of Health and Family Welfare, Govt of Karnataka", "Department of Medical Education, Govt of Karnataka"]
 stats:
   - { value: "1,625+", label: "Cases handled" }
   - { value: "₹3.77 Cr+", label: "Saved for community" }
@@ -19,7 +19,7 @@ stats:
 
 In April 2024, ABF launched a unique helpline — **+91 93640 24365** — that anyone in India can use to access treatment at government facilities in Karnataka and take advantage of government medical schemes. Full-time call operators are on the line **24/7, 365 days a year**.
 
-The premise is simple but rare: most people end up in expensive private hospitals not because they want to, but because they don't know where else to go. Active Health closes that information gap. Our team listens to the case, identifies the right government hospital or scheme (Ayushman Bharat, Mukhyamantri Arogya, SAST coverage, district-level facilities), and walks the family through the process.
+The premise is simple but rare: poor people end up in expensive corporate hospitals not because they want to, but because they don't know where else to go. Active Health closes that information gap. Our team listens to the case, identifies the right government hospital or scheme (Ayushman Bharat, Arogya Karnataka, SAST coverage, district-level facilities), and walks the family through the process.
 
 ## Why this matters
 

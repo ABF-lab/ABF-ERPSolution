@@ -10,4 +10,7 @@ export default defineConfig({
     webAnalytics: { enabled: false },
   }),
   integrations: [tailwind(), mdx()],
+  redirects: {
+    "/projects/mission-nodropout": "/relief/mission-nodropout",
+  },
 });

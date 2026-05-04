@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { razorpayClient, verifyPaymentSignature } from "../../../lib/razorpay";
 import { generateReceiptPdf } from "../../../lib/receipt";
 import { sendDonorReceipt } from "../../../lib/email";
-import { insertDonation } from "../../../lib/db";
+import { insertDonation, normaliseCategory } from "../../../lib/db";
 
 export const prerender = false;
 
@@ -33,6 +33,7 @@ export const POST: APIRoute = async ({ request }) => {
       pan: notes.donorPan || undefined,
       address: notes.donorAddress || undefined,
     };
+    const donorCategory = normaliseCategory(notes.donorCategory);
 
     if (!donor.email) {
       return json({ error: "Donor email missing from order" }, 500);
@@ -49,6 +50,7 @@ export const POST: APIRoute = async ({ request }) => {
       donorPhone: donor.phone,
       donorPan: donor.pan,
       donorAddress: donor.address,
+      donorCategory,
       donatedAt,
     });
 
@@ -59,6 +61,7 @@ export const POST: APIRoute = async ({ request }) => {
       donor,
       amountInr,
       paymentId,
+      donorCategory,
     });
 
     // 3. Email donor only — donation row + PDF are in DB for the team to access via /admin/donations.
