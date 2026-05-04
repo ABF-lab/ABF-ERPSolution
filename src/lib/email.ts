@@ -16,7 +16,7 @@ const REPLY_TO = process.env.REPLY_TO_EMAIL || "activebengaluru@gmail.com";
 const LOGO_URL = "https://activebengaluru.org/images/logo.png";
 const SITE_URL = "https://activebengaluru.org";
 
-const Y = "#FFD23F";
+const Y = "#FFE066";
 const R = "#EF4136";
 const INK = "#1A1A1A";
 

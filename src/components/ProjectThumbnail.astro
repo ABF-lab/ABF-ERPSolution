@@ -19,7 +19,7 @@ const {
 const themes = {
   yellow: { bg: "bg-brand-yellow",      text: "text-brand-ink",   sub: "text-brand-ink/70",  iconStroke: "#1A1A1A", chip: "bg-brand-ink/10 text-brand-ink", line: "bg-brand-red/70" },
   red:    { bg: "bg-brand-red",         text: "text-white",       sub: "text-white/85",      iconStroke: "#FFFFFF", chip: "bg-white/15 text-white",         line: "bg-brand-yellow" },
-  ink:    { bg: "bg-brand-ink",         text: "text-white",       sub: "text-white/75",      iconStroke: "#FFD23F", chip: "bg-white/10 text-white",         line: "bg-brand-yellow" },
+  ink:    { bg: "bg-brand-ink",         text: "text-white",       sub: "text-white/75",      iconStroke: "#FFE066", chip: "bg-white/10 text-white",         line: "bg-brand-yellow" },
   cream:  { bg: "bg-brand-cream",       text: "text-brand-ink",   sub: "text-brand-ink/65",  iconStroke: "#1A1A1A", chip: "bg-brand-ink/10 text-brand-ink", line: "bg-brand-red/70" },
 } as const;
 
@@ -47,7 +47,7 @@ const t = themes[accent];
   <div class="flex items-end justify-between gap-3">
     <div class="min-w-0 flex-1">
       <div class:list={["w-10 h-1 rounded-full mb-3", t.line]}></div>
-      <h3 class="font-display leading-[0.95] tracking-tight text-[clamp(1.25rem,3.6vw,2rem)] [overflow-wrap:anywhere]">{title}</h3>
+      <h3 class="font-display leading-tight tracking-tight text-xl sm:text-2xl break-words">{title}</h3>
     </div>
     <div class="shrink-0 opacity-90" aria-hidden="true">
       <svg class="w-10 h-10 sm:w-14 sm:h-14" viewBox="0 0 48 48" fill="none" stroke={t.iconStroke} stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">

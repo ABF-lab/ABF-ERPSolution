@@ -45,7 +45,7 @@ const ABF = {
   signatoryTitle: process.env.ORG_SIGNATORY_TITLE || "Director, Active Bengaluru Foundation",
 };
 
-const Y = "#FFD23F";
+const Y = "#FFE066";
 const R = "#EF4136";
 const INK = "#1A1A1A";
 const MUTED = "#666666";

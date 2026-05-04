@@ -5,7 +5,7 @@ export default {
     extend: {
       colors: {
         brand: {
-          yellow: "#FFD23F",
+          yellow: "#FFE066",
           "yellow-soft": "#FFE680",
           "yellow-deep": "#F5B800",
           red: "#EF4136",
