@@ -49,6 +49,12 @@ export const prerender = true;
             <span class="font-semibold">First charge today, then automatically</span> on the same date each cycle. Cancel anytime by emailing
             <a href="mailto:activebengaluru@gmail.com" class="text-brand-red font-semibold">activebengaluru@gmail.com</a>.
           </p>
+          <p id="recurringQuirkNote" class="hidden mt-2 rounded-lg bg-brand-yellow/40 ring-1 ring-brand-yellow-deep/50 px-3 py-2 text-[11px] text-brand-ink/85 leading-relaxed">
+            <span class="font-bold">Heads-up for mobile users:</span> Razorpay sometimes shows a brief
+            <em>"Payment could not be completed"</em> screen for subscriptions even when your payment succeeded.
+            If you see that, please don't retry — check your email in a couple of minutes. If no receipt arrives within 30 minutes,
+            email <a href="mailto:activebengaluru@gmail.com" class="text-brand-red font-semibold">activebengaluru@gmail.com</a>.
+          </p>
         </div>
 
         <!-- Amount -->
@@ -195,6 +201,28 @@ export const prerender = true;
     </div>
   </div>
 
+  <!-- Reassurance overlay (shown when Razorpay's modal closes after a subscription attempt
+       without a success callback — covers the 'Payment could not be completed' Razorpay UX) -->
+  <div id="pendingOverlay" class="hidden fixed inset-0 z-[60] bg-brand-cream/95 backdrop-blur flex items-center justify-center px-6">
+    <div class="max-w-sm w-full text-center">
+      <div class="mx-auto mb-5 w-14 h-14 rounded-full bg-brand-yellow flex items-center justify-center" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <h2 class="font-display text-2xl text-brand-ink leading-tight">Did Razorpay show "Payment could not be completed"?</h2>
+      <p class="mt-3 text-sm text-brand-ink/75 leading-relaxed">
+        On mobile, Razorpay sometimes shows that message even when your <strong>payment actually succeeded</strong>. We'll send a confirmation to your email <strong>within 5 minutes</strong> if the payment went through.
+      </p>
+      <p class="mt-3 text-sm text-brand-ink/75 leading-relaxed">
+        Don't retry yet — that could create a duplicate. Check your email first.
+      </p>
+      <button id="pendingDismissBtn" type="button" class="btn-secondary mt-5 text-sm">Got it, I'll wait</button>
+      <p class="mt-4 text-[11px] text-brand-ink/55">
+        Still nothing after 30 minutes? Email
+        <a href="mailto:activebengaluru@gmail.com" class="text-brand-red font-semibold underline">activebengaluru@gmail.com</a>.
+      </p>
+    </div>
+  </div>
+
   <!-- Razorpay Checkout SDK -->
   <script src="https://checkout.razorpay.com/v1/checkout.js" is:inline></script>
 
@@ -224,14 +252,25 @@ export const prerender = true;
     const panRow = document.getElementById("panRow")!;
     const panNotice = document.getElementById("panNotice")!;
     const recurringHelper = document.getElementById("recurringHelper")!;
+    const recurringQuirkNote = document.getElementById("recurringQuirkNote")!;
     const submitBtn = document.getElementById("submitBtn") as HTMLButtonElement;
     const submitLabel = document.getElementById("submitLabel")!;
     const submitSpinner = document.getElementById("submitSpinner")!;
     const errorMsg = document.getElementById("errorMsg")!;
     const confirmOverlay = document.getElementById("confirmOverlay")!;
+    const pendingOverlay = document.getElementById("pendingOverlay")!;
+    const pendingDismissBtn = document.getElementById("pendingDismissBtn")!;
 
     function showConfirmOverlay() { confirmOverlay.classList.remove("hidden"); }
     function hideConfirmOverlay() { confirmOverlay.classList.add("hidden"); }
+    function showPendingOverlay() { pendingOverlay.classList.remove("hidden"); }
+    function hidePendingOverlay() { pendingOverlay.classList.add("hidden"); }
+    pendingDismissBtn.addEventListener("click", hidePendingOverlay);
+
+    // Tracks whether our success handler has already fired in this session.
+    // If the Razorpay modal dismisses without it firing on a recurring flow,
+    // we show the reassurance overlay instead of the blank form.
+    let handlerFired = false;
 
     let selectedFrequency: "one-off" | "monthly" | "quarterly" | "yearly" = "one-off";
     let selectedCategory: "general" | "zakat" | "sadqa" | "interest" = "general";
@@ -267,6 +306,7 @@ export const prerender = true;
         btn.classList.remove("bg-brand-cream");
         btn.setAttribute("aria-pressed", "true");
         recurringHelper.classList.toggle("hidden", selectedFrequency === "one-off");
+        recurringQuirkNote.classList.toggle("hidden", selectedFrequency === "one-off");
         updateSubmitLabel();
       });
     });
@@ -324,6 +364,7 @@ export const prerender = true;
       };
 
       setBusy(true);
+      handlerFired = false;
 
       try {
         const isRecurring = selectedFrequency !== "one-off";
@@ -338,7 +379,16 @@ export const prerender = true;
           image: "/favicon-512.png",
           prefill: { name: basePayload.donorName, email: basePayload.donorEmail, contact: basePayload.donorPhone },
           theme: { color: "#FFD23F" },
-          modal: { ondismiss: () => setBusy(false) },
+          modal: {
+            ondismiss: () => {
+              setBusy(false);
+              // For subscriptions, Razorpay's iframe sometimes shows "Payment could not be
+              // completed" while the auth actually succeeded server-side. If our handler
+              // never fired, show a reassurance overlay rather than dumping the user back
+              // on a silent form.
+              if (isRecurring && !handlerFired) showPendingOverlay();
+            },
+          },
         };
 
         let rzpOptions: Record<string, unknown>;
@@ -359,6 +409,7 @@ export const prerender = true;
             amount: undefined, // subscription drives the amount; passing it can confuse Checkout
             subscription_id: sub.subscriptionId,
             handler: async (response: { razorpay_payment_id: string; razorpay_subscription_id: string; razorpay_signature: string }) => {
+              handlerFired = true;
               showConfirmOverlay();
               try {
                 const verifyRes = await fetch("/api/donate/verify", {
@@ -398,6 +449,7 @@ export const prerender = true;
             amount: order.amountInr * 100,
             order_id: order.orderId,
             handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
+              handlerFired = true;
               showConfirmOverlay();
               try {
                 const verifyRes = await fetch("/api/donate/verify", {
