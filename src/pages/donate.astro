@@ -181,6 +181,20 @@ export const prerender = true;
     </div>
   </section>
 
+  <!-- Confirmation overlay (shown while we verify + send the receipt after Razorpay auth) -->
+  <div id="confirmOverlay" class="hidden fixed inset-0 z-[60] bg-brand-yellow/95 backdrop-blur flex items-center justify-center px-6">
+    <div class="max-w-sm w-full text-center">
+      <div class="mx-auto mb-5 w-14 h-14 rounded-full border-4 border-brand-ink/15 border-t-brand-red animate-spin" aria-hidden="true"></div>
+      <h2 class="font-display text-2xl text-brand-ink leading-tight">Confirming your donation…</h2>
+      <p class="mt-3 text-sm text-brand-ink/75 leading-relaxed">
+        Please don't close or refresh this page. We're recording the payment, generating your 80G receipt, and emailing it to you. This takes a few seconds.
+      </p>
+      <p class="mt-4 text-[11px] uppercase tracking-[0.18em] text-brand-ink/55 font-semibold">
+        Active Bengaluru Foundation
+      </p>
+    </div>
+  </div>
+
   <!-- Razorpay Checkout SDK -->
   <script src="https://checkout.razorpay.com/v1/checkout.js" is:inline></script>
 
@@ -214,6 +228,10 @@ export const prerender = true;
     const submitLabel = document.getElementById("submitLabel")!;
     const submitSpinner = document.getElementById("submitSpinner")!;
     const errorMsg = document.getElementById("errorMsg")!;
+    const confirmOverlay = document.getElementById("confirmOverlay")!;
+
+    function showConfirmOverlay() { confirmOverlay.classList.remove("hidden"); }
+    function hideConfirmOverlay() { confirmOverlay.classList.add("hidden"); }
 
     let selectedFrequency: "one-off" | "monthly" | "quarterly" | "yearly" = "one-off";
     let selectedCategory: "general" | "zakat" | "sadqa" | "interest" = "general";
@@ -341,6 +359,7 @@ export const prerender = true;
             amount: undefined, // subscription drives the amount; passing it can confuse Checkout
             subscription_id: sub.subscriptionId,
             handler: async (response: { razorpay_payment_id: string; razorpay_subscription_id: string; razorpay_signature: string }) => {
+              showConfirmOverlay();
               try {
                 const verifyRes = await fetch("/api/donate/verify", {
                   method: "POST",
@@ -354,6 +373,7 @@ export const prerender = true;
                 window.location.href =
                   `/donate/thank-you?r=${encodeURIComponent(v.receiptNumber)}&a=${v.amountInr}&f=${selectedFrequency}`;
               } catch {
+                hideConfirmOverlay();
                 setBusy(false);
                 showError(
                   "Subscription started but receipt confirmation failed. The first charge will appear shortly. " +
@@ -378,6 +398,7 @@ export const prerender = true;
             amount: order.amountInr * 100,
             order_id: order.orderId,
             handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
+              showConfirmOverlay();
               try {
                 const verifyRes = await fetch("/api/donate/verify", {
                   method: "POST",
@@ -391,6 +412,7 @@ export const prerender = true;
                 window.location.href =
                   `/donate/thank-you?r=${encodeURIComponent(v.receiptNumber)}&a=${v.amountInr}`;
               } catch {
+                hideConfirmOverlay();
                 setBusy(false);
                 showError(
                   "Payment received but receipt generation failed. We'll email you shortly. " +
