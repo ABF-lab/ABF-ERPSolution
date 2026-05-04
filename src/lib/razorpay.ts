@@ -31,6 +31,28 @@ export function verifyPaymentSignature(opts: {
   );
 }
 
+/**
+ * Verify the signature returned by Razorpay Checkout for a subscription auth.
+ * Note the order — for subscriptions Razorpay signs `paymentId|subscriptionId`,
+ * which is the reverse of the orders flow (`orderId|paymentId`).
+ */
+export function verifySubscriptionSignature(opts: {
+  subscriptionId: string;
+  paymentId: string;
+  signature: string;
+}): boolean {
+  const secret = process.env.RAZORPAY_KEY_SECRET;
+  if (!secret) throw new Error("RAZORPAY_KEY_SECRET missing");
+  const expected = crypto
+    .createHmac("sha256", secret)
+    .update(`${opts.paymentId}|${opts.subscriptionId}`)
+    .digest("hex");
+  return crypto.timingSafeEqual(
+    Buffer.from(expected),
+    Buffer.from(opts.signature)
+  );
+}
+
 export function verifyWebhookSignature(rawBody: string, signature: string): boolean {
   const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
   if (!secret) throw new Error("RAZORPAY_WEBHOOK_SECRET missing");

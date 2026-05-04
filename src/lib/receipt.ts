@@ -3,12 +3,19 @@ import fs from "node:fs";
 import path from "node:path";
 
 export type DonorCategory = "general" | "zakat" | "sadqa" | "interest";
+export type FrequencyLabel = "monthly" | "quarterly" | "yearly";
 
 const CATEGORY_LABEL: Record<DonorCategory, string> = {
   general: "General",
   zakat: "Zakat",
   sadqa: "Sadqa",
   interest: "Interest Money",
+};
+
+const FREQUENCY_LABEL: Record<FrequencyLabel, string> = {
+  monthly: "monthly",
+  quarterly: "quarterly",
+  yearly: "yearly",
 };
 
 export interface ReceiptData {
@@ -24,6 +31,7 @@ export interface ReceiptData {
   amountInr: number;
   paymentId: string;
   donorCategory?: DonorCategory;
+  frequencyLabel?: FrequencyLabel;
 }
 
 const ABF = {
@@ -199,6 +207,14 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Buffer> {
       cursor += 14;
     } else {
       cursor += 4;
+    }
+
+    // Recurring marker — only present when this charge belongs to a subscription.
+    if (data.frequencyLabel) {
+      doc.font("Helvetica-Oblique").fontSize(9).fillColor(MUTED)
+         .text(`Recurring donation · charged ${FREQUENCY_LABEL[data.frequencyLabel]}`,
+               PAD, cursor, { width: CONTENT_W });
+      cursor += 12;
     }
 
     rule(doc, PAD, cursor, W - PAD);

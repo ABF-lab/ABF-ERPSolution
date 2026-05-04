@@ -22,6 +22,35 @@ export const prerender = true;
     <div class="grid gap-8 lg:grid-cols-[1.4fr_1fr] items-start">
       <!-- Form -->
       <form id="donateForm" class="rounded-3xl bg-white shadow-card ring-1 ring-brand-ink/10 p-5 sm:p-8 space-y-6">
+        <!-- Frequency -->
+        <div>
+          <label class="text-[11px] uppercase tracking-[0.18em] font-semibold text-brand-ink/60">How often?</label>
+          <div class="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {[
+              ["one-off","One-off"],
+              ["monthly","Monthly"],
+              ["quarterly","Quarterly"],
+              ["yearly","Yearly"],
+            ].map(([v, label]) => (
+              <button
+                type="button"
+                data-frequency={v}
+                aria-pressed={v === "one-off" ? "true" : "false"}
+                class:list={[
+                  "frequency-chip rounded-xl ring-1 ring-brand-ink/10 bg-brand-cream hover:bg-brand-yellow transition-colors px-3 py-2.5 sm:py-3 font-semibold text-sm sm:text-base",
+                  v === "one-off" && "ring-2 ring-brand-red bg-brand-yellow",
+                ]}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <p id="recurringHelper" class="hidden mt-2 text-xs text-brand-ink/60">
+            <span class="font-semibold">First charge today, then automatically</span> on the same date each cycle. Cancel anytime by emailing
+            <a href="mailto:activebengaluru@gmail.com" class="text-brand-red font-semibold">activebengaluru@gmail.com</a>.
+          </p>
+        </div>
+
         <!-- Amount -->
         <div>
           <label class="text-[11px] uppercase tracking-[0.18em] font-semibold text-brand-ink/60">Choose an amount</label>
@@ -63,12 +92,27 @@ export const prerender = true;
           </div>
           <div class="sm:col-span-2">
             <label class="block text-sm font-semibold text-brand-ink mb-1.5">Category</label>
-            <select id="categoryInput" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none bg-white">
-              <option value="general" selected>General</option>
-              <option value="zakat">Zakat</option>
-              <option value="sadqa">Sadqa</option>
-              <option value="interest">Interest Money</option>
-            </select>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" role="radiogroup" aria-label="Donation category">
+              {[
+                ["general","General"],
+                ["zakat","Zakat"],
+                ["sadqa","Sadqa"],
+                ["interest","Interest Money"],
+              ].map(([v, label]) => (
+                <button
+                  type="button"
+                  role="radio"
+                  data-category={v}
+                  aria-checked={v === "general" ? "true" : "false"}
+                  class:list={[
+                    "category-chip rounded-xl ring-1 ring-brand-ink/10 bg-brand-cream hover:bg-brand-yellow transition-colors px-3 py-2.5 font-semibold text-sm",
+                    v === "general" && "ring-2 ring-brand-red bg-brand-yellow",
+                  ]}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
             <p class="mt-1 text-xs text-brand-ink/55">Helps us allocate your contribution correctly. Shown on the 80G receipt.</p>
           </div>
           <div id="panRow" class="sm:col-span-2 hidden">
@@ -146,6 +190,10 @@ export const prerender = true;
       | { ok: true; orderId: string; amountInr: number; keyId: string }
       | { ok?: false; error: string };
 
+    type CreateSubResp =
+      | { ok: true; subscriptionId: string; amountInr: number; frequency: string; keyId: string }
+      | { ok?: false; error: string };
+
     type VerifyResp =
       | { ok: true; receiptNumber: string; paymentId: string; amountInr: number; donorName: string; donorEmail: string }
       | { ok?: false; error: string };
@@ -157,15 +205,18 @@ export const prerender = true;
     const nameInput = document.getElementById("nameInput") as HTMLInputElement;
     const emailInput = document.getElementById("emailInput") as HTMLInputElement;
     const phoneInput = document.getElementById("phoneInput") as HTMLInputElement;
-    const categoryInput = document.getElementById("categoryInput") as HTMLSelectElement;
     const panInput = document.getElementById("panInput") as HTMLInputElement;
     const addressInput = document.getElementById("addressInput") as HTMLTextAreaElement;
     const panRow = document.getElementById("panRow")!;
     const panNotice = document.getElementById("panNotice")!;
+    const recurringHelper = document.getElementById("recurringHelper")!;
     const submitBtn = document.getElementById("submitBtn") as HTMLButtonElement;
     const submitLabel = document.getElementById("submitLabel")!;
     const submitSpinner = document.getElementById("submitSpinner")!;
     const errorMsg = document.getElementById("errorMsg")!;
+
+    let selectedFrequency: "one-off" | "monthly" | "quarterly" | "yearly" = "one-off";
+    let selectedCategory: "general" | "zakat" | "sadqa" | "interest" = "general";
 
     function showError(msg: string) {
       errorMsg.textContent = msg;
@@ -177,6 +228,45 @@ export const prerender = true;
       submitLabel.classList.toggle("hidden", busy);
       submitSpinner.classList.toggle("hidden", !busy);
     }
+
+    function updateSubmitLabel() {
+      const txt = selectedFrequency === "one-off"
+        ? "Donate now →"
+        : `Start ${selectedFrequency} donation →`;
+      submitLabel.textContent = txt;
+    }
+
+    // Frequency chips
+    document.querySelectorAll<HTMLButtonElement>(".frequency-chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        selectedFrequency = btn.dataset.frequency as typeof selectedFrequency;
+        document.querySelectorAll<HTMLButtonElement>(".frequency-chip").forEach((b) => {
+          b.classList.remove("ring-2", "ring-brand-red", "bg-brand-yellow");
+          b.classList.add("bg-brand-cream");
+          b.setAttribute("aria-pressed", "false");
+        });
+        btn.classList.add("ring-2", "ring-brand-red", "bg-brand-yellow");
+        btn.classList.remove("bg-brand-cream");
+        btn.setAttribute("aria-pressed", "true");
+        recurringHelper.classList.toggle("hidden", selectedFrequency === "one-off");
+        updateSubmitLabel();
+      });
+    });
+
+    // Category chips
+    document.querySelectorAll<HTMLButtonElement>(".category-chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        selectedCategory = btn.dataset.category as typeof selectedCategory;
+        document.querySelectorAll<HTMLButtonElement>(".category-chip").forEach((b) => {
+          b.classList.remove("ring-2", "ring-brand-red", "bg-brand-yellow");
+          b.classList.add("bg-brand-cream");
+          b.setAttribute("aria-checked", "false");
+        });
+        btn.classList.add("ring-2", "ring-brand-red", "bg-brand-yellow");
+        btn.classList.remove("bg-brand-cream");
+        btn.setAttribute("aria-checked", "true");
+      });
+    });
 
     document.querySelectorAll<HTMLButtonElement>(".amount-preset").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -205,12 +295,12 @@ export const prerender = true;
       clearError();
 
       const amountInr = Number(amountInput.value);
-      const payload = {
+      const basePayload = {
         amountInr,
         donorName: nameInput.value.trim(),
         donorEmail: emailInput.value.trim(),
         donorPhone: phoneInput.value.trim(),
-        donorCategory: categoryInput.value,
+        donorCategory: selectedCategory,
         donorPan: panInput.value.trim().toUpperCase(),
         donorAddress: addressInput.value.trim(),
       };
@@ -218,51 +308,100 @@ export const prerender = true;
       setBusy(true);
 
       try {
-        const orderRes = await fetch("/api/donate/create-order", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        const order: CreateOrderResp = await orderRes.json();
-        if (!orderRes.ok || !("ok" in order) || !order.ok) {
-          throw new Error("error" in order ? order.error : "Could not create order");
-        }
-
-        const rzp = new window.Razorpay({
-          key: order.keyId,
-          amount: order.amountInr * 100,
+        const isRecurring = selectedFrequency !== "one-off";
+        const checkoutBase = {
+          key: "",
+          amount: amountInr * 100,
           currency: "INR",
           name: "Active Bengaluru Foundation",
-          description: "Tax-deductible donation (80G)",
+          description: isRecurring
+            ? `${selectedFrequency} recurring donation (80G)`
+            : "Tax-deductible donation (80G)",
           image: "/favicon-512.png",
-          order_id: order.orderId,
-          prefill: { name: payload.donorName, email: payload.donorEmail, contact: payload.donorPhone },
+          prefill: { name: basePayload.donorName, email: basePayload.donorEmail, contact: basePayload.donorPhone },
           theme: { color: "#FFD23F" },
-          handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
-            try {
-              const verifyRes = await fetch("/api/donate/verify", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(response),
-              });
-              const v: VerifyResp = await verifyRes.json();
-              if (!verifyRes.ok || !("ok" in v) || !v.ok) {
-                throw new Error("error" in v ? v.error : "Verification failed");
+          modal: { ondismiss: () => setBusy(false) },
+        };
+
+        let rzpOptions: Record<string, unknown>;
+
+        if (isRecurring) {
+          const subRes = await fetch("/api/donate/create-subscription", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...basePayload, frequency: selectedFrequency }),
+          });
+          const sub: CreateSubResp = await subRes.json();
+          if (!subRes.ok || !("ok" in sub) || !sub.ok) {
+            throw new Error("error" in sub ? sub.error : "Could not create subscription");
+          }
+          rzpOptions = {
+            ...checkoutBase,
+            key: sub.keyId,
+            amount: undefined, // subscription drives the amount; passing it can confuse Checkout
+            subscription_id: sub.subscriptionId,
+            handler: async (response: { razorpay_payment_id: string; razorpay_subscription_id: string; razorpay_signature: string }) => {
+              try {
+                const verifyRes = await fetch("/api/donate/verify", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(response),
+                });
+                const v: VerifyResp = await verifyRes.json();
+                if (!verifyRes.ok || !("ok" in v) || !v.ok) {
+                  throw new Error("error" in v ? v.error : "Verification failed");
+                }
+                window.location.href =
+                  `/donate/thank-you?r=${encodeURIComponent(v.receiptNumber)}&a=${v.amountInr}&f=${selectedFrequency}`;
+              } catch {
+                setBusy(false);
+                showError(
+                  "Subscription started but receipt confirmation failed. The first charge will appear shortly. " +
+                  "Reach us at activebengaluru@gmail.com if you don't get the receipt within 24 hours."
+                );
               }
-              window.location.href =
-                `/donate/thank-you?r=${encodeURIComponent(v.receiptNumber)}&a=${v.amountInr}`;
-            } catch (err) {
-              setBusy(false);
-              showError(
-                "Payment received but receipt generation failed. We'll email you shortly. " +
-                "Reach us at activebengaluru@gmail.com if you don't get the receipt within 24 hours."
-              );
-            }
-          },
-          modal: {
-            ondismiss: () => setBusy(false),
-          },
-        });
+            },
+          };
+        } else {
+          const orderRes = await fetch("/api/donate/create-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(basePayload),
+          });
+          const order: CreateOrderResp = await orderRes.json();
+          if (!orderRes.ok || !("ok" in order) || !order.ok) {
+            throw new Error("error" in order ? order.error : "Could not create order");
+          }
+          rzpOptions = {
+            ...checkoutBase,
+            key: order.keyId,
+            amount: order.amountInr * 100,
+            order_id: order.orderId,
+            handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
+              try {
+                const verifyRes = await fetch("/api/donate/verify", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(response),
+                });
+                const v: VerifyResp = await verifyRes.json();
+                if (!verifyRes.ok || !("ok" in v) || !v.ok) {
+                  throw new Error("error" in v ? v.error : "Verification failed");
+                }
+                window.location.href =
+                  `/donate/thank-you?r=${encodeURIComponent(v.receiptNumber)}&a=${v.amountInr}`;
+              } catch {
+                setBusy(false);
+                showError(
+                  "Payment received but receipt generation failed. We'll email you shortly. " +
+                  "Reach us at activebengaluru@gmail.com if you don't get the receipt within 24 hours."
+                );
+              }
+            },
+          };
+        }
+
+        const rzp = new window.Razorpay(rzpOptions);
         rzp.on("payment.failed", (resp: { error: { description: string } }) => {
           setBusy(false);
           showError(resp.error?.description || "Payment failed");

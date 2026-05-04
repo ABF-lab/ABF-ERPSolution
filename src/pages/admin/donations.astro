@@ -55,6 +55,7 @@ export const prerender = false;
       donorPhone?: string;
       donorPan?: string;
       donorCategory?: string;
+      subscriptionId?: string;
       donatedAt: string;
     }
     const CATEGORY_LABEL: Record<string, string> = {
@@ -94,7 +95,7 @@ export const prerender = false;
         $("tbody").innerHTML = rows.map((r) => `
           <tr class="hover:bg-brand-cream/40">
             <td class="px-3 py-2.5 whitespace-nowrap text-brand-ink/70">${fmtDate(r.donatedAt)}</td>
-            <td class="px-3 py-2.5 font-mono text-xs">${escapeHtml(r.receiptNumber)}</td>
+            <td class="px-3 py-2.5 font-mono text-xs">${escapeHtml(r.receiptNumber)}${r.subscriptionId ? ` <span class="ml-1 inline-flex items-center rounded-full bg-brand-yellow/60 px-1.5 py-0.5 text-[10px] font-semibold text-brand-ink whitespace-nowrap" title="Recurring donation (subscription ID: ${escapeHtml(r.subscriptionId)})">📅 recurring</span>` : ""}</td>
             <td class="px-3 py-2.5 text-right font-display whitespace-nowrap">${fmtINR(Number(r.amountInr) || 0)}</td>
             <td class="px-3 py-2.5 font-semibold">${escapeHtml(r.donorName || "")}</td>
             <td class="px-3 py-2.5 text-brand-ink/80">${escapeHtml(CATEGORY_LABEL[r.donorCategory || "general"] || "General")}</td>

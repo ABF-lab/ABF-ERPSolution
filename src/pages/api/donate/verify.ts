@@ -1,96 +1,218 @@
 import type { APIRoute } from "astro";
-import { razorpayClient, verifyPaymentSignature } from "../../../lib/razorpay";
-import { generateReceiptPdf } from "../../../lib/receipt";
+import { razorpayClient, verifyPaymentSignature, verifySubscriptionSignature } from "../../../lib/razorpay";
+import { generateReceiptPdf, type FrequencyLabel } from "../../../lib/receipt";
 import { sendDonorReceipt } from "../../../lib/email";
-import { insertDonation, normaliseCategory } from "../../../lib/db";
+import {
+  insertDonation,
+  insertSubscription,
+  normaliseCategory,
+  normaliseFrequency,
+  type Frequency,
+} from "../../../lib/db";
 
 export const prerender = false;
 
+const FREQUENCY_TOTAL_COUNT: Record<Frequency, number> = {
+  monthly: 240,
+  quarterly: 80,
+  yearly: 20,
+};
+
+/**
+ * Verify a Razorpay Checkout response. Two payload shapes are accepted:
+ *
+ * One-off (Razorpay Orders):
+ *   { razorpay_order_id, razorpay_payment_id, razorpay_signature }
+ *
+ * Recurring (Razorpay Subscriptions):
+ *   { razorpay_subscription_id, razorpay_payment_id, razorpay_signature }
+ *
+ * For one-off we generate the receipt PDF + email here synchronously.
+ * For subscriptions we also process the first charge optimistically — the
+ * webhook will fire shortly after for the same payment_id but `insertDonation`
+ * is idempotent on payment_id, so duplicate processing is impossible.
+ */
 export const POST: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
-    const orderId = String(body.razorpay_order_id || "");
     const paymentId = String(body.razorpay_payment_id || "");
     const signature = String(body.razorpay_signature || "");
+    const orderId = String(body.razorpay_order_id || "");
+    const subscriptionId = String(body.razorpay_subscription_id || "");
 
-    if (!orderId || !paymentId || !signature) {
+    if (!paymentId || !signature || (!orderId && !subscriptionId)) {
       return json({ error: "Missing payment details" }, 400);
     }
 
-    if (!verifyPaymentSignature({ orderId, paymentId, signature })) {
-      return json({ error: "Payment signature mismatch — possible tampering" }, 400);
+    if (subscriptionId) {
+      return await verifySubscriptionPath({ subscriptionId, paymentId, signature });
     }
-
-    // Fetch order from Razorpay to get the trusted notes (donor details)
-    const order = await razorpayClient().orders.fetch(orderId);
-    const notes = (order.notes || {}) as Record<string, string>;
-    const amountInr = Number(order.amount) / 100;
-
-    const donor = {
-      name: notes.donorName || "Donor",
-      email: notes.donorEmail || "",
-      phone: notes.donorPhone || undefined,
-      pan: notes.donorPan || undefined,
-      address: notes.donorAddress || undefined,
-    };
-    const donorCategory = normaliseCategory(notes.donorCategory);
-
-    if (!donor.email) {
-      return json({ error: "Donor email missing from order" }, 500);
-    }
-
-    // 1. Insert into Postgres — atomically assigns the receipt number
-    const donatedAt = new Date();
-    const { receiptNumber } = await insertDonation({
-      paymentId,
-      orderId,
-      amountInr,
-      donorName: donor.name,
-      donorEmail: donor.email,
-      donorPhone: donor.phone,
-      donorPan: donor.pan,
-      donorAddress: donor.address,
-      donorCategory,
-      donatedAt,
-    });
-
-    // 2. Generate receipt PDF
-    const pdfBuffer = await generateReceiptPdf({
-      receiptNumber,
-      donatedAt,
-      donor,
-      amountInr,
-      paymentId,
-      donorCategory,
-    });
-
-    // 3. Email donor only — donation row + PDF are in DB for the team to access via /admin/donations.
-    try {
-      await sendDonorReceipt({
-        donorName: donor.name,
-        donorEmail: donor.email,
-        amountInr,
-        receiptNumber,
-        paymentId,
-        pdfBuffer,
-      });
-    } catch (err) {
-      console.error("[verify] donor email failed:", err);
-    }
-
-    return json({
-      ok: true,
-      receiptNumber,
-      paymentId,
-      amountInr,
-      donorEmail: donor.email,
-      donorName: donor.name,
-    });
+    return await verifyOrderPath({ orderId, paymentId, signature });
   } catch (err) {
     console.error("verify error:", err);
     return json({ error: err instanceof Error ? err.message : "Server error" }, 500);
   }
 };
+
+async function verifyOrderPath(opts: { orderId: string; paymentId: string; signature: string }) {
+  if (!verifyPaymentSignature(opts)) {
+    return json({ error: "Payment signature mismatch — possible tampering" }, 400);
+  }
+  const order = await razorpayClient().orders.fetch(opts.orderId);
+  const notes = (order.notes || {}) as Record<string, string>;
+  const amountInr = Number(order.amount) / 100;
+
+  const donor = {
+    name: notes.donorName || "Donor",
+    email: notes.donorEmail || "",
+    phone: notes.donorPhone || undefined,
+    pan: notes.donorPan || undefined,
+    address: notes.donorAddress || undefined,
+  };
+  const donorCategory = normaliseCategory(notes.donorCategory);
+  if (!donor.email) return json({ error: "Donor email missing from order" }, 500);
+
+  const donatedAt = new Date();
+  const { receiptNumber, isNew } = await insertDonation({
+    paymentId: opts.paymentId,
+    orderId: opts.orderId,
+    amountInr,
+    donorName: donor.name,
+    donorEmail: donor.email,
+    donorPhone: donor.phone,
+    donorPan: donor.pan,
+    donorAddress: donor.address,
+    donorCategory,
+    donatedAt,
+  });
+
+  if (isNew) {
+    await sendReceipt({
+      receiptNumber, donatedAt, donor, amountInr,
+      paymentId: opts.paymentId, donorCategory,
+    });
+  }
+
+  return json({
+    ok: true,
+    receiptNumber,
+    paymentId: opts.paymentId,
+    amountInr,
+    donorEmail: donor.email,
+    donorName: donor.name,
+  });
+}
+
+async function verifySubscriptionPath(opts: {
+  subscriptionId: string;
+  paymentId: string;
+  signature: string;
+}) {
+  if (!verifySubscriptionSignature(opts)) {
+    return json({ error: "Subscription signature mismatch — possible tampering" }, 400);
+  }
+  const client = razorpayClient();
+  const sub = await client.subscriptions.fetch(opts.subscriptionId);
+  const notes = (sub.notes || {}) as Record<string, string>;
+
+  const donor = {
+    name: notes.donorName || "Donor",
+    email: notes.donorEmail || "",
+    phone: notes.donorPhone || undefined,
+    pan: notes.donorPan || undefined,
+    address: notes.donorAddress || undefined,
+  };
+  const donorCategory = normaliseCategory(notes.donorCategory);
+  const frequency = (normaliseFrequency(notes.frequency) || "monthly") as Frequency;
+  if (!donor.email) return json({ error: "Donor email missing from subscription" }, 500);
+
+  // Plan amount lives on the plan, not the subscription — fetch it.
+  const plan = await client.plans.fetch(String(sub.plan_id));
+  const amountInr = Number((plan.item as { amount?: number }).amount || 0) / 100;
+
+  // Persist the subscription row idempotently (matches by razorpay_subscription_id).
+  await insertSubscription({
+    razorpaySubscriptionId: sub.id,
+    razorpayPlanId: String(sub.plan_id),
+    donorName: donor.name,
+    donorEmail: donor.email,
+    donorPhone: donor.phone,
+    donorPan: donor.pan,
+    donorAddress: donor.address,
+    donorCategory,
+    amountInr,
+    frequency,
+    totalCount: Number(sub.total_count || FREQUENCY_TOTAL_COUNT[frequency]),
+    status: "active",
+  });
+
+  // Process the first charge optimistically. `insertDonation` is idempotent on
+  // payment_id, so the webhook firing later for the same charge is a no-op.
+  const donatedAt = new Date();
+  const { receiptNumber, isNew } = await insertDonation({
+    paymentId: opts.paymentId,
+    orderId: opts.subscriptionId, // we don't have an order_id for subs; reuse subId
+    amountInr,
+    donorName: donor.name,
+    donorEmail: donor.email,
+    donorPhone: donor.phone,
+    donorPan: donor.pan,
+    donorAddress: donor.address,
+    donorCategory,
+    subscriptionId: sub.id,
+    donatedAt,
+  });
+
+  if (isNew) {
+    await sendReceipt({
+      receiptNumber, donatedAt, donor, amountInr,
+      paymentId: opts.paymentId, donorCategory,
+      frequencyLabel: frequency as FrequencyLabel,
+    });
+  }
+
+  return json({
+    ok: true,
+    receiptNumber,
+    paymentId: opts.paymentId,
+    amountInr,
+    donorEmail: donor.email,
+    donorName: donor.name,
+    subscription: { id: sub.id, frequency },
+  });
+}
+
+async function sendReceipt(p: {
+  receiptNumber: string;
+  donatedAt: Date;
+  donor: { name: string; email: string; phone?: string; pan?: string; address?: string };
+  amountInr: number;
+  paymentId: string;
+  donorCategory: ReturnType<typeof normaliseCategory>;
+  frequencyLabel?: FrequencyLabel;
+}) {
+  const pdfBuffer = await generateReceiptPdf({
+    receiptNumber: p.receiptNumber,
+    donatedAt: p.donatedAt,
+    donor: p.donor,
+    amountInr: p.amountInr,
+    paymentId: p.paymentId,
+    donorCategory: p.donorCategory,
+    frequencyLabel: p.frequencyLabel,
+  });
+  try {
+    await sendDonorReceipt({
+      donorName: p.donor.name,
+      donorEmail: p.donor.email,
+      amountInr: p.amountInr,
+      receiptNumber: p.receiptNumber,
+      paymentId: p.paymentId,
+      pdfBuffer,
+    });
+  } catch (err) {
+    console.error("[verify] donor email failed:", err);
+  }
+}
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {

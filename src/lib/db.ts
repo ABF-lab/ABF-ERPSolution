@@ -58,6 +58,16 @@ const sql = ((strings: TemplateStringsArray, ...values: any[]) =>
   pool().sql(strings, ...values)) as ReturnType<typeof createPool>["sql"];
 
 export type DonorCategory = "general" | "zakat" | "sadqa" | "interest";
+export type Frequency = "monthly" | "quarterly" | "yearly";
+export type SubscriptionStatus =
+  | "created"
+  | "authenticated"
+  | "active"
+  | "completed"
+  | "cancelled"
+  | "halted"
+  | "pending"
+  | "paused";
 
 export interface DonationRow {
   id: number;
@@ -71,6 +81,7 @@ export interface DonationRow {
   donorPan?: string;
   donorAddress?: string;
   donorCategory: DonorCategory;
+  subscriptionId?: string;
   donatedAt: string; // ISO
 }
 
@@ -84,15 +95,56 @@ export interface InsertDonationInput {
   donorPan?: string;
   donorAddress?: string;
   donorCategory?: DonorCategory;
+  subscriptionId?: string;
   donatedAt: Date;
 }
 
+export interface SubscriptionRow {
+  id: number;
+  razorpaySubscriptionId: string;
+  razorpayPlanId: string;
+  donorName: string;
+  donorEmail: string;
+  donorPhone?: string;
+  donorPan?: string;
+  donorAddress?: string;
+  donorCategory: DonorCategory;
+  amountInr: number;
+  frequency: Frequency;
+  totalCount: number;
+  status: SubscriptionStatus;
+  startedAt: string;
+  cancelledAt?: string;
+}
+
+export interface InsertSubscriptionInput {
+  razorpaySubscriptionId: string;
+  razorpayPlanId: string;
+  donorName: string;
+  donorEmail: string;
+  donorPhone?: string;
+  donorPan?: string;
+  donorAddress?: string;
+  donorCategory: DonorCategory;
+  amountInr: number;
+  frequency: Frequency;
+  totalCount: number;
+  status?: SubscriptionStatus;
+}
+
 const VALID_CATEGORIES: ReadonlySet<DonorCategory> = new Set(["general", "zakat", "sadqa", "interest"]);
+const VALID_FREQUENCIES: ReadonlySet<Frequency> = new Set(["monthly", "quarterly", "yearly"]);
 
 /** Coerce any incoming string to a valid DonorCategory; defaults to "general". */
 export function normaliseCategory(raw: unknown): DonorCategory {
   const v = String(raw || "").toLowerCase().trim();
   return VALID_CATEGORIES.has(v as DonorCategory) ? (v as DonorCategory) : "general";
+}
+
+/** Coerce any incoming string to a valid Frequency, or null if not recurring. */
+export function normaliseFrequency(raw: unknown): Frequency | null {
+  const v = String(raw || "").toLowerCase().trim();
+  return VALID_FREQUENCIES.has(v as Frequency) ? (v as Frequency) : null;
 }
 
 /** Indian fiscal year label, e.g. "2025-26" for any date between 1 Apr 2025 and 31 Mar 2026. */
@@ -135,6 +187,46 @@ export async function initSchema(): Promise<void> {
     ALTER TABLE donations
     ADD COLUMN IF NOT EXISTS donor_category TEXT NOT NULL DEFAULT 'general'
   `;
+  // Migration: subscription_id column links each donation to its parent subscription
+  // (NULL for one-off donations).
+  await sql`
+    ALTER TABLE donations
+    ADD COLUMN IF NOT EXISTS subscription_id TEXT
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS idx_donations_subscription_id ON donations(subscription_id)`;
+
+  // Cache of Razorpay plans we've created — one per (amount, frequency) combo.
+  await sql`
+    CREATE TABLE IF NOT EXISTS razorpay_plans (
+      id SERIAL PRIMARY KEY,
+      razorpay_plan_id TEXT UNIQUE NOT NULL,
+      amount_inr NUMERIC NOT NULL,
+      frequency TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE (amount_inr, frequency)
+    )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS subscriptions (
+      id SERIAL PRIMARY KEY,
+      razorpay_subscription_id TEXT UNIQUE NOT NULL,
+      razorpay_plan_id TEXT NOT NULL,
+      donor_name TEXT NOT NULL,
+      donor_email TEXT NOT NULL,
+      donor_phone TEXT,
+      donor_pan TEXT,
+      donor_address TEXT,
+      donor_category TEXT NOT NULL DEFAULT 'general',
+      amount_inr NUMERIC NOT NULL,
+      frequency TEXT NOT NULL,
+      total_count INT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'created',
+      started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      cancelled_at TIMESTAMPTZ
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS idx_subscriptions_email ON subscriptions(donor_email)`;
 }
 
 /**
@@ -157,17 +249,21 @@ async function nextReceiptNumber(date: Date): Promise<string> {
   return `ABF/${fy}/${String(n).padStart(4, "0")}`;
 }
 
-/** Insert a donation row, atomically assigning a receipt number. */
+/**
+ * Insert a donation row, atomically assigning a receipt number.
+ * Returns `isNew: false` if a row already existed for this paymentId — the caller
+ * can then skip duplicate work (PDF + email) when re-entered via webhook + verify.
+ */
 export async function insertDonation(
   input: InsertDonationInput
-): Promise<{ receiptNumber: string }> {
+): Promise<{ receiptNumber: string; isNew: boolean }> {
   // If we already have a row for this paymentId, return the existing receipt
-  // number (idempotent in case Razorpay calls verify twice).
+  // number (idempotent in case Razorpay calls verify twice or webhook + verify both run).
   const existing = await sql<{ receipt_number: string }>`
     SELECT receipt_number FROM donations WHERE payment_id = ${input.paymentId} LIMIT 1
   `;
   if (existing.rows.length > 0) {
-    return { receiptNumber: existing.rows[0].receipt_number };
+    return { receiptNumber: existing.rows[0].receipt_number, isNew: false };
   }
 
   const receiptNumber = await nextReceiptNumber(input.donatedAt);
@@ -176,15 +272,15 @@ export async function insertDonation(
     INSERT INTO donations (
       receipt_number, payment_id, order_id, amount_inr,
       donor_name, donor_email, donor_phone, donor_pan, donor_address,
-      donor_category, donated_at
+      donor_category, subscription_id, donated_at
     ) VALUES (
       ${receiptNumber}, ${input.paymentId}, ${input.orderId}, ${input.amountInr},
       ${input.donorName}, ${input.donorEmail}, ${input.donorPhone || null},
       ${input.donorPan || null}, ${input.donorAddress || null},
-      ${category}, ${input.donatedAt.toISOString()}
+      ${category}, ${input.subscriptionId || null}, ${input.donatedAt.toISOString()}
     )
   `;
-  return { receiptNumber };
+  return { receiptNumber, isNew: true };
 }
 
 /** Manually insert a donation with a specific receipt number — used by admin recovery flow. */
@@ -196,39 +292,26 @@ export async function manualInsertDonation(
     INSERT INTO donations (
       receipt_number, payment_id, order_id, amount_inr,
       donor_name, donor_email, donor_phone, donor_pan, donor_address,
-      donor_category, donated_at
+      donor_category, subscription_id, donated_at
     ) VALUES (
       ${input.receiptNumber}, ${input.paymentId}, ${input.orderId}, ${input.amountInr},
       ${input.donorName}, ${input.donorEmail}, ${input.donorPhone || null},
       ${input.donorPan || null}, ${input.donorAddress || null},
-      ${category}, ${input.donatedAt.toISOString()}
+      ${category}, ${input.subscriptionId || null}, ${input.donatedAt.toISOString()}
     )
   `;
 }
 
 /** Fetch all donations, newest first. */
 export async function listDonations(): Promise<DonationRow[]> {
-  const { rows } = await sql<{
-    id: number;
-    receipt_number: string;
-    payment_id: string;
-    order_id: string;
-    amount_inr: string;
-    donor_name: string;
-    donor_email: string;
-    donor_phone: string | null;
-    donor_pan: string | null;
-    donor_address: string | null;
-    donor_category: string | null;
-    donated_at: Date;
-  }>`
+  const { rows } = await sql`
     SELECT id, receipt_number, payment_id, order_id, amount_inr,
            donor_name, donor_email, donor_phone, donor_pan, donor_address,
-           donor_category, donated_at
+           donor_category, subscription_id, donated_at
     FROM donations
     ORDER BY donated_at DESC, id DESC
   `;
-  return rows.map(toDonationRow);
+  return rows.map((r) => toDonationRow(r as Record<string, unknown>));
 }
 
 /** Find one donation by paymentId. */
@@ -238,13 +321,122 @@ export async function findDonationByPaymentId(
   const { rows } = await sql`
     SELECT id, receipt_number, payment_id, order_id, amount_inr,
            donor_name, donor_email, donor_phone, donor_pan, donor_address,
-           donor_category, donated_at
+           donor_category, subscription_id, donated_at
     FROM donations
     WHERE payment_id = ${paymentId}
     LIMIT 1
   `;
   if (rows.length === 0) return null;
   return toDonationRow(rows[0] as Record<string, unknown>);
+}
+
+/* ============================================================
+ *                        SUBSCRIPTIONS
+ * ============================================================ */
+
+/**
+ * Get a cached Razorpay plan_id for (amount, frequency), or null if we haven't
+ * created one yet. Caller is responsible for creating + caching when null.
+ */
+export async function findCachedPlanId(
+  amountInr: number,
+  frequency: Frequency
+): Promise<string | null> {
+  const { rows } = await sql<{ razorpay_plan_id: string }>`
+    SELECT razorpay_plan_id FROM razorpay_plans
+    WHERE amount_inr = ${amountInr} AND frequency = ${frequency}
+    LIMIT 1
+  `;
+  return rows.length > 0 ? rows[0].razorpay_plan_id : null;
+}
+
+/** Cache a freshly-created Razorpay plan_id for future lookups. */
+export async function cachePlanId(
+  razorpayPlanId: string,
+  amountInr: number,
+  frequency: Frequency
+): Promise<void> {
+  await sql`
+    INSERT INTO razorpay_plans (razorpay_plan_id, amount_inr, frequency)
+    VALUES (${razorpayPlanId}, ${amountInr}, ${frequency})
+    ON CONFLICT (amount_inr, frequency) DO NOTHING
+  `;
+}
+
+/** Insert a subscription row. Idempotent on razorpay_subscription_id. */
+export async function insertSubscription(input: InsertSubscriptionInput): Promise<void> {
+  await sql`
+    INSERT INTO subscriptions (
+      razorpay_subscription_id, razorpay_plan_id,
+      donor_name, donor_email, donor_phone, donor_pan, donor_address, donor_category,
+      amount_inr, frequency, total_count, status
+    ) VALUES (
+      ${input.razorpaySubscriptionId}, ${input.razorpayPlanId},
+      ${input.donorName}, ${input.donorEmail}, ${input.donorPhone || null},
+      ${input.donorPan || null}, ${input.donorAddress || null}, ${input.donorCategory},
+      ${input.amountInr}, ${input.frequency}, ${input.totalCount}, ${input.status || "created"}
+    )
+    ON CONFLICT (razorpay_subscription_id) DO NOTHING
+  `;
+}
+
+/** Find a subscription by Razorpay's subscription_id. */
+export async function findSubscriptionByRazorpayId(
+  razorpaySubscriptionId: string
+): Promise<SubscriptionRow | null> {
+  const { rows } = await sql`
+    SELECT id, razorpay_subscription_id, razorpay_plan_id,
+           donor_name, donor_email, donor_phone, donor_pan, donor_address, donor_category,
+           amount_inr, frequency, total_count, status, started_at, cancelled_at
+    FROM subscriptions
+    WHERE razorpay_subscription_id = ${razorpaySubscriptionId}
+    LIMIT 1
+  `;
+  if (rows.length === 0) return null;
+  return toSubscriptionRow(rows[0] as Record<string, unknown>);
+}
+
+/** Update a subscription's status. Sets cancelled_at when the new status indicates termination. */
+export async function updateSubscriptionStatus(
+  razorpaySubscriptionId: string,
+  status: SubscriptionStatus
+): Promise<void> {
+  const isTerminal = status === "cancelled" || status === "completed" || status === "halted";
+  if (isTerminal) {
+    await sql`
+      UPDATE subscriptions
+      SET status = ${status}, cancelled_at = COALESCE(cancelled_at, NOW())
+      WHERE razorpay_subscription_id = ${razorpaySubscriptionId}
+    `;
+  } else {
+    await sql`
+      UPDATE subscriptions
+      SET status = ${status}
+      WHERE razorpay_subscription_id = ${razorpaySubscriptionId}
+    `;
+  }
+}
+
+function toSubscriptionRow(r: Record<string, unknown>): SubscriptionRow {
+  return {
+    id: Number(r.id),
+    razorpaySubscriptionId: String(r.razorpay_subscription_id),
+    razorpayPlanId: String(r.razorpay_plan_id),
+    donorName: String(r.donor_name),
+    donorEmail: String(r.donor_email),
+    donorPhone: r.donor_phone ? String(r.donor_phone) : undefined,
+    donorPan: r.donor_pan ? String(r.donor_pan) : undefined,
+    donorAddress: r.donor_address ? String(r.donor_address) : undefined,
+    donorCategory: normaliseCategory(r.donor_category),
+    amountInr: Number(r.amount_inr),
+    frequency: (normaliseFrequency(r.frequency) || "monthly") as Frequency,
+    totalCount: Number(r.total_count),
+    status: String(r.status) as SubscriptionStatus,
+    startedAt: (r.started_at instanceof Date ? r.started_at : new Date(String(r.started_at))).toISOString(),
+    cancelledAt: r.cancelled_at
+      ? (r.cancelled_at instanceof Date ? r.cancelled_at : new Date(String(r.cancelled_at))).toISOString()
+      : undefined,
+  };
 }
 
 /** Delete a donation row by paymentId. Returns the number of rows deleted (0 or 1). */
@@ -266,6 +458,7 @@ function toDonationRow(r: Record<string, unknown>): DonationRow {
     donorPan: r.donor_pan ? String(r.donor_pan) : undefined,
     donorAddress: r.donor_address ? String(r.donor_address) : undefined,
     donorCategory: normaliseCategory(r.donor_category),
+    subscriptionId: r.subscription_id ? String(r.subscription_id) : undefined,
     donatedAt: (r.donated_at instanceof Date
       ? r.donated_at
       : new Date(String(r.donated_at))
