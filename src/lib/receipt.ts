@@ -240,7 +240,8 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Buffer> {
 
     // ===== SIGNATURE (bottom-right, fixed Y so it doesn't drift) =====
     // Reserve a fixed sig zone so layout stays stable even if content above varies.
-    const sigBaseY = Math.max(cursor + 24, H - 150);
+    // Pushed higher so the title doesn't collide with the footer rule (footer at H-32, rule at H-42).
+    const sigBaseY = Math.max(cursor + 24, H - 180);
     const sigW = 200;
     const sigX = W - PAD - sigW;
     doc.font("Helvetica").fontSize(9.5).fillColor(INK)
@@ -248,13 +249,13 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Buffer> {
 
     // Embed the authorised-signatory stamp image if available; otherwise fall back to a plain underline.
     if (STAMP_BUFFER) {
-      // Stamp ~ square, render at h=72 to fit the sig zone, right-aligned within sigW.
-      const stampH = 72;
-      const stampW = 72; // approximate square crop; pdfkit will preserve aspect via fit
-      doc.image(STAMP_BUFFER, sigX + sigW - stampW, sigBaseY + 14, { fit: [stampW, stampH] });
+      // Stamp at h=64 (slightly smaller) so it tucks neatly between "For ABF" and the underline.
+      const stampH = 64;
+      const stampW = 64;
+      doc.image(STAMP_BUFFER, sigX + sigW - stampW, sigBaseY + 12, { fit: [stampW, stampH] });
     }
 
-    const lineY = sigBaseY + 92;
+    const lineY = sigBaseY + 84;
     doc.moveTo(sigX, lineY).lineTo(sigX + sigW, lineY).strokeColor(INK).stroke();
     doc.font("Helvetica-Bold").fontSize(10).fillColor(INK)
        .text(ABF.signatoryName, sigX, lineY + 4, { width: sigW, align: "right" });
