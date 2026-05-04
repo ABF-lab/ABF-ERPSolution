@@ -49,8 +49,14 @@ export const POST: APIRoute = async ({ request }) => {
     }
     return await verifyOrderPath({ orderId, paymentId, signature });
   } catch (err) {
-    console.error("verify error:", err);
-    return json({ error: err instanceof Error ? err.message : "Server error" }, 500);
+    const errMsg = err instanceof Error ? err.message : String(err);
+    const errStack = err instanceof Error ? err.stack : undefined;
+    console.error("verify error:", { message: errMsg, stack: errStack });
+    return json({
+      error: `Server error during verify: ${errMsg}`,
+      // safe to expose: helps you/admin diagnose without re-running prod
+      stack: errStack ? errStack.split("\n").slice(0, 6).join(" | ") : undefined,
+    }, 500);
   }
 };
 
@@ -86,11 +92,13 @@ async function verifyOrderPath(opts: { orderId: string; paymentId: string; signa
     donatedAt,
   });
 
+  let emailError: string | undefined;
   if (isNew) {
-    await sendReceipt({
+    const r = await sendReceipt({
       receiptNumber, donatedAt, donor, amountInr,
       paymentId: opts.paymentId, donorCategory,
     });
+    if (!r.ok) emailError = r.error;
   }
 
   return json({
@@ -100,6 +108,7 @@ async function verifyOrderPath(opts: { orderId: string; paymentId: string; signa
     amountInr,
     donorEmail: donor.email,
     donorName: donor.name,
+    emailError,
   });
 }
 
@@ -163,12 +172,14 @@ async function verifySubscriptionPath(opts: {
     donatedAt,
   });
 
+  let emailError: string | undefined;
   if (isNew) {
-    await sendReceipt({
+    const r = await sendReceipt({
       receiptNumber, donatedAt, donor, amountInr,
       paymentId: opts.paymentId, donorCategory,
       frequencyLabel: frequency as FrequencyLabel,
     });
+    if (!r.ok) emailError = r.error;
   }
 
   return json({
@@ -179,6 +190,7 @@ async function verifySubscriptionPath(opts: {
     donorEmail: donor.email,
     donorName: donor.name,
     subscription: { id: sub.id, frequency },
+    emailError,
   });
 }
 
@@ -190,16 +202,23 @@ async function sendReceipt(p: {
   paymentId: string;
   donorCategory: ReturnType<typeof normaliseCategory>;
   frequencyLabel?: FrequencyLabel;
-}) {
-  const pdfBuffer = await generateReceiptPdf({
-    receiptNumber: p.receiptNumber,
-    donatedAt: p.donatedAt,
-    donor: p.donor,
-    amountInr: p.amountInr,
-    paymentId: p.paymentId,
-    donorCategory: p.donorCategory,
-    frequencyLabel: p.frequencyLabel,
-  });
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  let pdfBuffer: Buffer;
+  try {
+    pdfBuffer = await generateReceiptPdf({
+      receiptNumber: p.receiptNumber,
+      donatedAt: p.donatedAt,
+      donor: p.donor,
+      amountInr: p.amountInr,
+      paymentId: p.paymentId,
+      donorCategory: p.donorCategory,
+      frequencyLabel: p.frequencyLabel,
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[verify] PDF generation failed:", msg);
+    return { ok: false, error: `PDF generation failed: ${msg}` };
+  }
   try {
     await sendDonorReceipt({
       donorName: p.donor.name,
@@ -209,8 +228,11 @@ async function sendReceipt(p: {
       paymentId: p.paymentId,
       pdfBuffer,
     });
+    return { ok: true };
   } catch (err) {
-    console.error("[verify] donor email failed:", err);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[verify] donor email failed:", msg);
+    return { ok: false, error: msg };
   }
 }
 
