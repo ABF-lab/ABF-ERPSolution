@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { razorpayClient, verifyPaymentSignature } from "../../../lib/razorpay";
 import { generateReceiptPdf } from "../../../lib/receipt";
-import { sendDonorReceipt, sendFinanceNotification } from "../../../lib/email";
+import { sendDonorReceipt } from "../../../lib/email";
 import { insertDonation } from "../../../lib/db";
 
 export const prerender = false;
@@ -61,34 +61,19 @@ export const POST: APIRoute = async ({ request }) => {
       paymentId,
     });
 
-    // 3. Email donor + finance team in parallel
-    const emailResults = await Promise.allSettled([
-      sendDonorReceipt({
+    // 3. Email donor only — donation row + PDF are in DB for the team to access via /admin/donations.
+    try {
+      await sendDonorReceipt({
         donorName: donor.name,
         donorEmail: donor.email,
         amountInr,
         receiptNumber,
         paymentId,
         pdfBuffer,
-      }),
-      sendFinanceNotification({
-        donorName: donor.name,
-        donorEmail: donor.email,
-        donorPhone: donor.phone,
-        donorPan: donor.pan,
-        amountInr,
-        receiptNumber,
-        paymentId,
-        pdfBuffer,
-      }),
-    ]);
-
-    // Surface any email failures in logs (donation is still recorded; PDF is in DB)
-    emailResults.forEach((r, i) => {
-      if (r.status === "rejected") {
-        console.error(`[verify] email ${i === 0 ? "to donor" : "to finance"} failed:`, r.reason);
-      }
-    });
+      });
+    } catch (err) {
+      console.error("[verify] donor email failed:", err);
+    }
 
     return json({
       ok: true,

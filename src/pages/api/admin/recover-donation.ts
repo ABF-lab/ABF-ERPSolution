@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { manualInsertDonation, findDonationByPaymentId } from "../../../lib/db";
 import { generateReceiptPdf } from "../../../lib/receipt";
-import { sendDonorReceipt, sendFinanceNotification } from "../../../lib/email";
+import { sendDonorReceipt } from "../../../lib/email";
 
 export const prerender = false;
 
@@ -76,34 +76,21 @@ export const POST: APIRoute = async ({ request }) => {
       paymentId: body.paymentId,
     });
 
-    const emailResults = await Promise.allSettled([
-      sendDonorReceipt({
+    let emailError: string | null = null;
+    try {
+      await sendDonorReceipt({
         donorName: body.donorName,
         donorEmail: body.donorEmail,
         amountInr,
         receiptNumber: body.receiptNumber,
         paymentId: body.paymentId,
         pdfBuffer,
-      }),
-      sendFinanceNotification({
-        donorName: body.donorName,
-        donorEmail: body.donorEmail,
-        donorPhone: body.donorPhone,
-        donorPan: body.donorPan,
-        amountInr,
-        receiptNumber: body.receiptNumber,
-        paymentId: body.paymentId,
-        pdfBuffer,
-      }),
-    ]);
+      });
+    } catch (err) {
+      emailError = err instanceof Error ? err.message : String(err);
+    }
 
-    const emailErrors = emailResults
-      .map((r, i) => r.status === "rejected"
-        ? { recipient: i === 0 ? "donor" : "finance", error: String(r.reason) }
-        : null)
-      .filter(Boolean);
-
-    return json({ ok: true, receiptNumber: body.receiptNumber, emailErrors });
+    return json({ ok: true, receiptNumber: body.receiptNumber, emailError });
   } catch (err) {
     console.error("recover-donation error:", err);
     return json({ error: err instanceof Error ? err.message : "Server error" }, 500);
