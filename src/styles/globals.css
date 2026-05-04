@@ -81,10 +81,12 @@ h1, h2, h3, h4 {
     @apply my-5;
   }
   .prose-abf h2 {
-    @apply font-display text-3xl mt-12 mb-4;
+    @apply font-display text-2xl sm:text-3xl mt-10 sm:mt-12 mb-4;
+    overflow-wrap: anywhere;
   }
   .prose-abf h3 {
-    @apply font-display text-2xl mt-10 mb-3;
+    @apply font-display text-xl sm:text-2xl mt-8 sm:mt-10 mb-3;
+    overflow-wrap: anywhere;
   }
   .prose-abf ul {
     @apply my-5 ml-6 list-disc space-y-2;
@@ -97,6 +99,7 @@ h1, h2, h3, h4 {
   }
   .prose-abf a {
     @apply text-brand-red underline-offset-4 hover:underline;
+    overflow-wrap: anywhere;
   }
   .prose-abf blockquote {
     @apply my-6 border-l-4 border-brand-yellow pl-5 italic text-brand-ink/80;

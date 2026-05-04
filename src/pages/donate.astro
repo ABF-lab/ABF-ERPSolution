@@ -27,7 +27,7 @@ export const prerender = true;
           <label class="text-[11px] uppercase tracking-[0.18em] font-semibold text-brand-ink/60">Choose an amount</label>
           <div class="mt-3 grid grid-cols-3 sm:grid-cols-5 gap-2">
             {[500, 1000, 2500, 5000, 10000].map((amt) => (
-              <button type="button" data-preset={amt} class="amount-preset rounded-xl ring-1 ring-brand-ink/10 bg-brand-cream hover:bg-brand-yellow transition-colors py-3 font-display text-base sm:text-lg">
+              <button type="button" data-preset={amt} class="amount-preset rounded-xl ring-1 ring-brand-ink/10 bg-brand-cream hover:bg-brand-yellow transition-colors px-2 py-2.5 sm:py-3 font-display text-sm sm:text-lg tabular-nums whitespace-nowrap">
                 ₹{amt.toLocaleString("en-IN")}
               </button>
             ))}
