@@ -14,7 +14,7 @@ interface Props {
 const {
   title = "Active Bengaluru Foundation — A People's Movement",
   description = "ABF bridges NGOs, government, and civil society to uplift the underprivileged in Bengaluru and Karnataka. Active Health helpline, drug de-addiction, education, water relief, and more.",
-  image = "/images/logo.png",
+  image = "/og-cover.png",
   hideImpactStrip = false,
 } = Astro.props;
 
@@ -43,6 +43,10 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? "https://www.activeb
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={new URL(image, Astro.site ?? "https://www.activebengaluru.org").toString()} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Active Bengaluru Foundation — A People's Movement" />
+    <meta property="og:site_name" content="Active Bengaluru Foundation" />
     <meta property="og:url" content={canonical.toString()} />
 
     <meta name="twitter:card" content="summary_large_image" />
