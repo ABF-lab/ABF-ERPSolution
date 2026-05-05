@@ -3,6 +3,7 @@ import BaseLayout from "./BaseLayout.astro";
 import StatCard from "../components/StatCard.astro";
 import ProjectThumbnail from "../components/ProjectThumbnail.astro";
 import RelatedEvents from "../components/RelatedEvents.astro";
+import RelatedMedia from "../components/RelatedMedia.astro";
 
 interface Props {
   title: string;
@@ -21,13 +22,14 @@ interface Props {
   kind: "project" | "relief" | "event";
   parentProject?: { slug: string; title: string };
   projectSlug?: string;
+  entrySlug?: string;
 }
 const {
   title, tagline, summary, heroImage,
   thumbnailIcon = "sparkle", thumbnailAccent = "yellow",
   startedAt, occurredOn, location, status,
   partners = [], stats = [], ctaPhone, kind,
-  parentProject, projectSlug,
+  parentProject, projectSlug, entrySlug,
 } = Astro.props;
 
 const kindLabel =
@@ -119,5 +121,7 @@ const thumbCategory: "Project" | "Relief" | "Event" =
     {kind === "project" && projectSlug && (
       <RelatedEvents projectSlug={projectSlug} />
     )}
+
+    {entrySlug && <RelatedMedia slug={entrySlug} />}
   </article>
 </BaseLayout>

@@ -1,0 +1,47 @@
+---
+import { articlesForSlug } from "../data/media";
+
+interface Props {
+  slug: string;
+}
+const { slug } = Astro.props;
+const items = articlesForSlug(slug);
+---
+
+{items.length > 0 && (
+  <section class="bg-brand-cream">
+    <div class="container-narrow py-12 sm:py-14">
+      <div class="flex items-end justify-between gap-3 flex-wrap">
+        <div>
+          <span class="chip">In the media</span>
+          <h2 class="font-display text-2xl sm:text-3xl mt-3 leading-tight">Press &amp; <span class="accent-red">video coverage</span></h2>
+        </div>
+        <a href="/media" class="text-sm font-semibold text-brand-ink/70 hover:text-brand-red whitespace-nowrap">All coverage →</a>
+      </div>
+
+      <ul class="mt-6 grid gap-3">
+        {items.map((a) => (
+          <li class="card p-4 sm:p-5 flex flex-wrap items-start sm:items-center justify-between gap-3 hover:shadow-card-lg transition-shadow">
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-wider text-brand-ink/55 font-semibold">
+                <span>{a.outlet}</span>
+                <span>·</span>
+                <span>{a.date}</span>
+                {a.kind === "video" && (
+                  <>
+                    <span>·</span>
+                    <span class="rounded-full bg-brand-red/10 text-brand-red px-2 py-0.5">▶ Video</span>
+                  </>
+                )}
+              </div>
+              <h3 class="font-semibold text-base sm:text-lg mt-1 leading-snug break-words">{a.headline}</h3>
+            </div>
+            <a href={a.url} target="_blank" rel="noopener" class="btn-secondary text-sm whitespace-nowrap">
+              {a.kind === "video" ? "Watch ▶" : "Read →"}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+)}
