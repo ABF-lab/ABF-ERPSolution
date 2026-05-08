@@ -30,14 +30,14 @@ export interface TeamGroup {
 export const team: TeamGroup[] = [
   {
     id: "founders",
-    title: "Founding Members",
-    blurb: "These are the five people who took the step of formally establishing Active Bengaluru Foundation and who continue to give direction to everything we do.",
+    title: "Directors",
+    blurb: "Active Bengaluru Foundation is registered as a Section 8 company. These five members serve as the foundation's directors — the legal stewards on the registration — and are part of the wider team that built ABF.",
     members: [
-      { name: "Tabraiz Amman",          role: "Founding Director", slug: "tabraiz-amman" },
-      { name: "Syed Tousif Masood",     role: "Founding Director", slug: "syed-tousif-masood" },
-      { name: "Syed Salman",            role: "Founding Director", slug: "syed-salman" },
-      { name: "Mohammed Irfan Sadiq",   role: "Founding Director", slug: "mohammed-irfan-sadiq" },
-      { name: "Tauseef Ahmed",          role: "Founding Director", slug: "tauseef-ahmed" },
+      { name: "Tabraiz Amman",          role: "Director", slug: "tabraiz-amman" },
+      { name: "Syed Tousif Masood",     role: "Director", slug: "syed-tousif-masood" },
+      { name: "Syed Salman",            role: "Director", slug: "syed-salman" },
+      { name: "Mohammed Irfan Sadiq",   role: "Director", slug: "mohammed-irfan-sadiq" },
+      { name: "Tauseef Ahmed",          role: "Director", slug: "tauseef-ahmed" },
     ],
   },
   {
@@ -54,10 +54,10 @@ export const team: TeamGroup[] = [
       { name: "Muhammed Mehraj",              role: "Core Team", slug: "muhammed-mehraj" },
       { name: "Nasrullah Sharif",             role: "Core Team", slug: "nasrullah-sharif" },
       { name: "Naveed Irfan Iqbal",           role: "Core Team", slug: "naveed-irfan-iqbal" },
+      { name: "Mohammed Ismail",              role: "Core Team", slug: "mohammed-ismail" },
       { name: "Afser Ahmed",                  role: "Core Team", slug: "afser-ahmed" },
       { name: "Saifulla Khan",                role: "Core Team", slug: "saifulla-khan" },
       { name: "Sadiq Rahmatullah",            role: "Core Team", slug: "sadiq-rahmatullah" },
-      { name: "Mohammed Ismail",              role: "Core Team", slug: "mohammed-ismail" },
     ],
   },
   {
