@@ -31,13 +31,14 @@ export const team: TeamGroup[] = [
   {
     id: "founders",
     title: "Directors",
-    blurb: "Active Bengaluru Foundation is registered as a Section 8 company. These five members serve as the foundation's directors — the legal stewards on the registration — and are part of the wider team that built ABF.",
+    blurb: "Active Bengaluru Foundation is registered as a Section 8 company. These six members serve as the foundation's directors — the legal stewards on the registration — and are part of the wider team that built ABF.",
     members: [
       { name: "Tabraiz Amman",          role: "Director", slug: "tabraiz-amman" },
       { name: "Syed Tousif Masood",     role: "Director", slug: "syed-tousif-masood" },
       { name: "Syed Salman",            role: "Director", slug: "syed-salman" },
       { name: "Mohammed Irfan Sadiq",   role: "Director", slug: "mohammed-irfan-sadiq" },
       { name: "Tauseef Ahmed",          role: "Director", slug: "tauseef-ahmed" },
+      { name: "Mohammed Sherief",       role: "Director", slug: "mohammed-sherief" },
     ],
   },
   {
