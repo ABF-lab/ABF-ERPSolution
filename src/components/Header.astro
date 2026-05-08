@@ -43,63 +43,68 @@ const path = Astro.url.pathname;
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
     </button>
   </div>
-
-  <!-- Mobile drawer: full-screen yellow overlay with logo, close button, large nav rows, and pinned CTAs at bottom. -->
-  <div
-    id="mobileMenu"
-    class="md:hidden hidden fixed inset-0 z-50 bg-brand-yellow flex flex-col"
-    role="dialog"
-    aria-modal="true"
-    aria-label="Site navigation"
-  >
-    <div class="absolute inset-x-0 top-0 h-1 bg-brand-red pointer-events-none" aria-hidden="true"></div>
-    <div class="absolute inset-x-0 bottom-0 h-1 bg-brand-red pointer-events-none" aria-hidden="true"></div>
-
-    <div class="container-x py-4 flex items-center justify-between">
-      <a href="/" class="flex items-center gap-2" aria-label="Home">
-        <img src="/images/logo.png" alt="Active Bengaluru" class="h-11 w-auto" />
-      </a>
-      <button
-        id="mobileMenuClose"
-        class="rounded-full p-2 hover:bg-brand-ink/10"
-        aria-label="Close menu"
-      >
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-          <path d="M6 6l12 12M6 18L18 6"/>
-        </svg>
-      </button>
-    </div>
-
-    <nav class="container-x mt-2 flex-1 overflow-y-auto pb-4">
-      <ul class="flex flex-col gap-1.5 text-lg font-semibold">
-        {nav.map((item) => {
-          const active = path === item.href || path.startsWith(item.href + "/");
-          return (
-            <li>
-              <a
-                href={item.href}
-                class:list={[
-                  "flex items-center justify-between rounded-2xl px-5 py-4 transition-colors",
-                  active
-                    ? "bg-brand-ink text-white"
-                    : "bg-white/40 text-brand-ink hover:bg-white/70 ring-1 ring-brand-ink/10",
-                ]}
-              >
-                <span>{item.label}</span>
-                <span aria-hidden="true" class={active ? "text-brand-yellow" : "text-brand-ink/30"}>→</span>
-              </a>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
-
-    <div class="container-x py-5 border-t border-brand-ink/10 grid gap-3">
-      <a href="/donate" class="btn-primary text-base justify-center w-full">Donate →</a>
-      <a href="tel:+919364024365" class="btn-call text-base justify-center w-full">📞 24/7 Helpline · +91 93640 24365</a>
-    </div>
-  </div>
 </header>
+
+<!--
+  Mobile drawer is intentionally OUTSIDE the <header> element because the header
+  uses `backdrop-blur`, which creates a containing block for fixed-position
+  descendants — that traps `fixed inset-0` inside the header's bounds instead
+  of the viewport. Placing it as a sibling avoids that.
+-->
+<div
+  id="mobileMenu"
+  class="md:hidden hidden fixed inset-0 z-50 bg-brand-yellow flex flex-col"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Site navigation"
+>
+  <div class="absolute inset-x-0 top-0 h-1 bg-brand-red pointer-events-none" aria-hidden="true"></div>
+  <div class="absolute inset-x-0 bottom-0 h-1 bg-brand-red pointer-events-none" aria-hidden="true"></div>
+
+  <div class="container-x py-4 flex items-center justify-between">
+    <a href="/" class="flex items-center gap-2" aria-label="Home">
+      <img src="/images/logo.png" alt="Active Bengaluru" class="h-11 w-auto" />
+    </a>
+    <button
+      id="mobileMenuClose"
+      class="rounded-full p-2 hover:bg-brand-ink/10"
+      aria-label="Close menu"
+    >
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <path d="M6 6l12 12M6 18L18 6"/>
+      </svg>
+    </button>
+  </div>
+
+  <nav class="container-x mt-2 flex-1 overflow-y-auto pb-4">
+    <ul class="flex flex-col gap-1.5 text-lg font-semibold">
+      {nav.map((item) => {
+        const active = path === item.href || path.startsWith(item.href + "/");
+        return (
+          <li>
+            <a
+              href={item.href}
+              class:list={[
+                "flex items-center justify-between rounded-2xl px-5 py-4 transition-colors",
+                active
+                  ? "bg-brand-ink text-white"
+                  : "bg-white/40 text-brand-ink hover:bg-white/70 ring-1 ring-brand-ink/10",
+              ]}
+            >
+              <span>{item.label}</span>
+              <span aria-hidden="true" class={active ? "text-brand-yellow" : "text-brand-ink/30"}>→</span>
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  </nav>
+
+  <div class="container-x py-5 border-t border-brand-ink/10 grid gap-3">
+    <a href="/donate" class="btn-primary text-base justify-center w-full">Donate →</a>
+    <a href="tel:+919364024365" class="btn-call text-base justify-center w-full">📞 24/7 Helpline · +91 93640 24365</a>
+  </div>
+</div>
 
 <script>
   const btn = document.getElementById("mobileMenuBtn");
