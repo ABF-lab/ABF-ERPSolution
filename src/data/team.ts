@@ -55,7 +55,7 @@ export const team: TeamGroup[] = [
       { name: "Nasrullah Sharif",             role: "Core Team", slug: "nasrullah-sharif" },
       { name: "Naveed Irfan Iqbal",           role: "Core Team", slug: "naveed-irfan-iqbal" },
       { name: "Mohammed Ismail",              role: "Core Team", slug: "mohammed-ismail" },
-      { name: "Afser Ahmed",                  role: "Core Team", slug: "afser-ahmed" },
+      { name: "Afsar Ahmed",                  role: "Core Team", slug: "afsar-ahmed" },
       { name: "Saifulla Khan",                role: "Core Team", slug: "saifulla-khan" },
       { name: "Sadiq Rahmatullah",            role: "Core Team", slug: "sadiq-rahmatullah" },
     ],
