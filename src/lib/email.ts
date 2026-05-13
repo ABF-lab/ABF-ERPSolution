@@ -11,7 +11,15 @@ function client(): Resend {
 
 const FROM_EMAIL = process.env.FROM_EMAIL || "Active Bengaluru <onboarding@resend.dev>";
 const FINANCE_EMAIL = process.env.FINANCE_EMAIL || "activebengaluru@gmail.com";
-const REPLY_TO = process.env.REPLY_TO_EMAIL || "activebengaluru@gmail.com";
+// Default Reply-To uses the same domain as From so spam filters don't flag a
+// domain mismatch (gmail.com reply-to from a custom-domain sender is a common
+// soft-fail signal). Resend inbound on activebengaluru.org catches replies.
+const REPLY_TO = process.env.REPLY_TO_EMAIL || "donations@activebengaluru.org";
+
+// One-click unsubscribe — required by Gmail & Yahoo bulk-sender rules (Feb 2024).
+// Even though donation receipts are transactional and donors don't opt-in/out,
+// having the header set improves inbox placement.
+const UNSUB_MAILTO = process.env.UNSUB_MAILTO || "unsubscribe@activebengaluru.org";
 
 const LOGO_URL = "https://activebengaluru.org/images/logo.png";
 const SITE_URL = "https://activebengaluru.org";
@@ -127,12 +135,41 @@ export async function sendDonorReceipt(p: SendReceiptParams) {
 </html>
   `;
 
+  // Plain-text body alongside HTML — multipart/alternative scores better with
+  // spam filters and works for text-only clients.
+  const text = [
+    `Thank you, ${p.donorName}.`,
+    ``,
+    `Your donation of ₹ ${amount} to Active Bengaluru Foundation has been received.`,
+    ``,
+    `Receipt details:`,
+    `  Receipt #: ${p.receiptNumber}`,
+    `  Amount:    ₹ ${amount}`,
+    `  Payment:   ${p.paymentId}`,
+    `  Date:      ${date}`,
+    ``,
+    `Your 80G tax-exemption receipt is attached as a PDF — keep it safe and use it`,
+    `when filing your income-tax return.`,
+    ``,
+    `Questions? Reply to this email, or write to activebengaluru@gmail.com`,
+    `Phone: +91 93640 24365  ·  Web: https://activebengaluru.org`,
+    ``,
+    `Active Bengaluru Foundation · Section 8 NPO · 12A & 80G certified`,
+    `No 12, 1st Floor, Lazar Road, Fraser Town, Bangalore 560005`,
+  ].join("\n");
+
   const res = await client().emails.send({
     from: FROM_EMAIL,
     to: p.donorEmail,
     replyTo: REPLY_TO,
     subject: `Your 80G receipt — ${p.receiptNumber} · Active Bengaluru Foundation`,
     html,
+    text,
+    headers: {
+      "List-Unsubscribe": `<mailto:${UNSUB_MAILTO}>`,
+      "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+      "X-Entity-Type": "transactional",
+    },
     attachments: [{
       filename: `${p.receiptNumber.replace(/\//g, "-")}.pdf`,
       content: p.pdfBuffer,
