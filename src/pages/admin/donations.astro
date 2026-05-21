@@ -22,6 +22,26 @@ export const prerender = false;
     <div id="loading" class="rounded-2xl bg-brand-cream p-8 text-center text-brand-ink/60">Loading donations…</div>
     <div id="error" class="hidden rounded-2xl bg-brand-red/10 text-brand-red p-6 text-sm font-semibold"></div>
 
+    <!-- Summary cards -->
+    <div id="summary" class="hidden mb-6 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div class="rounded-2xl bg-brand-ink text-white p-4 sm:p-5">
+        <div class="text-[10px] uppercase tracking-wider text-white/55 font-semibold">Total raised</div>
+        <div id="sumTotal" class="font-display text-2xl sm:text-3xl mt-1 tabular-nums">—</div>
+      </div>
+      <div class="rounded-2xl bg-brand-yellow text-brand-ink p-4 sm:p-5">
+        <div class="text-[10px] uppercase tracking-wider text-brand-ink/55 font-semibold">Donations</div>
+        <div id="sumCount" class="font-display text-2xl sm:text-3xl mt-1 tabular-nums">—</div>
+      </div>
+      <div class="rounded-2xl bg-white ring-1 ring-brand-ink/10 p-4 sm:p-5">
+        <div class="text-[10px] uppercase tracking-wider text-brand-ink/55 font-semibold">One-time / Recurring</div>
+        <div id="sumType" class="font-display text-2xl sm:text-3xl mt-1 tabular-nums">—</div>
+      </div>
+      <div class="rounded-2xl bg-white ring-1 ring-brand-ink/10 p-4 sm:p-5">
+        <div class="text-[10px] uppercase tracking-wider text-brand-ink/55 font-semibold">By category</div>
+        <div id="sumCategory" class="text-xs mt-1.5 leading-relaxed text-brand-ink/80">—</div>
+      </div>
+    </div>
+
     <div id="tableWrap" class="hidden rounded-2xl bg-white ring-1 ring-brand-ink/10 shadow-card overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
@@ -30,6 +50,7 @@ export const prerender = false;
               <th class="px-3 py-3 font-semibold whitespace-nowrap">Date</th>
               <th class="px-3 py-3 font-semibold">Receipt #</th>
               <th class="px-3 py-3 font-semibold text-right whitespace-nowrap">Amount</th>
+              <th class="px-3 py-3 font-semibold">Type</th>
               <th class="px-3 py-3 font-semibold">Donor</th>
               <th class="px-3 py-3 font-semibold">Category</th>
               <th class="px-3 py-3 font-semibold">Email</th>
@@ -56,6 +77,7 @@ export const prerender = false;
       donorPan?: string;
       donorCategory?: string;
       subscriptionId?: string;
+      frequency?: string;
       donatedAt: string;
     }
     const CATEGORY_LABEL: Record<string, string> = {
@@ -64,6 +86,7 @@ export const prerender = false;
       sadqa: "Sadqa",
       interest: "Interest",
     };
+    const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
     const $ = (id: string) => document.getElementById(id)!;
     const fmtINR = (n: number) => `₹ ${n.toLocaleString("en-IN")}`;
@@ -92,11 +115,37 @@ export const prerender = false;
         const total = rows.reduce((s, r) => s + (Number(r.amountInr) || 0), 0);
         $("totals").textContent = `${rows.length} donations · ${fmtINR(total)} total`;
 
+        // ---- Summary cards ----
+        const recurringCount = rows.filter((r) => r.subscriptionId).length;
+        const oneTimeCount = rows.length - recurringCount;
+        const byCat: Record<string, number> = {};
+        rows.forEach((r) => {
+          const c = r.donorCategory || "general";
+          byCat[c] = (byCat[c] || 0) + (Number(r.amountInr) || 0);
+        });
+        $("sumTotal").textContent = fmtINR(total);
+        $("sumCount").textContent = String(rows.length);
+        $("sumType").textContent = `${oneTimeCount} / ${recurringCount}`;
+        $("sumCategory").innerHTML = ["general", "zakat", "sadqa", "interest"]
+          .filter((c) => byCat[c])
+          .map((c) => `<div><span class="text-brand-ink/55">${CATEGORY_LABEL[c]}:</span> <strong>${fmtINR(byCat[c])}</strong></div>`)
+          .join("") || '<div class="text-brand-ink/45">—</div>';
+        $("summary").classList.remove("hidden");
+
+        function typePill(r: Row): string {
+          if (r.subscriptionId) {
+            const freq = r.frequency ? ` — ${cap(r.frequency)}` : "";
+            return `<span class="inline-flex items-center rounded-full bg-brand-yellow px-2.5 py-1 text-[11px] font-semibold text-brand-ink whitespace-nowrap">🔁 Recurring${freq}</span>`;
+          }
+          return `<span class="inline-flex items-center rounded-full bg-brand-ink/8 px-2.5 py-1 text-[11px] font-semibold text-brand-ink/70 whitespace-nowrap">One-time</span>`;
+        }
+
         $("tbody").innerHTML = rows.map((r) => `
           <tr class="hover:bg-brand-cream/40">
             <td class="px-3 py-2.5 whitespace-nowrap text-brand-ink/70">${fmtDate(r.donatedAt)}</td>
-            <td class="px-3 py-2.5 font-mono text-xs">${escapeHtml(r.receiptNumber)}${r.subscriptionId ? ` <span class="ml-1 inline-flex items-center rounded-full bg-brand-yellow/60 px-1.5 py-0.5 text-[10px] font-semibold text-brand-ink whitespace-nowrap" title="Recurring donation (subscription ID: ${escapeHtml(r.subscriptionId)})">📅 recurring</span>` : ""}</td>
+            <td class="px-3 py-2.5 font-mono text-xs">${escapeHtml(r.receiptNumber)}</td>
             <td class="px-3 py-2.5 text-right font-display whitespace-nowrap">${fmtINR(Number(r.amountInr) || 0)}</td>
+            <td class="px-3 py-2.5">${typePill(r)}</td>
             <td class="px-3 py-2.5 font-semibold">${escapeHtml(r.donorName || "")}</td>
             <td class="px-3 py-2.5 text-brand-ink/80">${escapeHtml(CATEGORY_LABEL[r.donorCategory || "general"] || "General")}</td>
             <td class="px-3 py-2.5 text-brand-ink/70 break-all">${escapeHtml(r.donorEmail || "")}</td>
@@ -104,7 +153,7 @@ export const prerender = false;
             <td class="px-3 py-2.5 font-mono text-xs"><a class="text-brand-red hover:underline" target="_blank" href="https://dashboard.razorpay.com/app/payments/${encodeURIComponent(r.paymentId)}">${escapeHtml(r.paymentId)}</a></td>
             <td class="px-3 py-2.5 whitespace-nowrap"><a class="inline-flex items-center gap-1 text-brand-red hover:underline font-semibold text-xs" href="/api/admin/receipt?paymentId=${encodeURIComponent(r.paymentId)}">⬇ PDF</a></td>
           </tr>
-        `).join("") || `<tr><td colspan="9" class="px-3 py-8 text-center text-brand-ink/55">No donations yet.</td></tr>`;
+        `).join("") || `<tr><td colspan="10" class="px-3 py-8 text-center text-brand-ink/55">No donations yet.</td></tr>`;
 
         $("loading").classList.add("hidden");
         $("tableWrap").classList.remove("hidden");

@@ -82,6 +82,7 @@ export interface DonationRow {
   donorAddress?: string;
   donorCategory: DonorCategory;
   subscriptionId?: string;
+  frequency?: Frequency; // joined from subscriptions when this row is a recurring charge
   donatedAt: string; // ISO
 }
 
@@ -302,14 +303,16 @@ export async function manualInsertDonation(
   `;
 }
 
-/** Fetch all donations, newest first. */
+/** Fetch all donations, newest first. Joins subscriptions to surface frequency on recurring charges. */
 export async function listDonations(): Promise<DonationRow[]> {
   const { rows } = await sql`
-    SELECT id, receipt_number, payment_id, order_id, amount_inr,
-           donor_name, donor_email, donor_phone, donor_pan, donor_address,
-           donor_category, subscription_id, donated_at
-    FROM donations
-    ORDER BY donated_at DESC, id DESC
+    SELECT d.id, d.receipt_number, d.payment_id, d.order_id, d.amount_inr,
+           d.donor_name, d.donor_email, d.donor_phone, d.donor_pan, d.donor_address,
+           d.donor_category, d.subscription_id, d.donated_at,
+           s.frequency AS frequency
+    FROM donations d
+    LEFT JOIN subscriptions s ON s.razorpay_subscription_id = d.subscription_id
+    ORDER BY d.donated_at DESC, d.id DESC
   `;
   return rows.map((r) => toDonationRow(r as Record<string, unknown>));
 }
@@ -459,6 +462,7 @@ function toDonationRow(r: Record<string, unknown>): DonationRow {
     donorAddress: r.donor_address ? String(r.donor_address) : undefined,
     donorCategory: normaliseCategory(r.donor_category),
     subscriptionId: r.subscription_id ? String(r.subscription_id) : undefined,
+    frequency: r.frequency ? (normaliseFrequency(r.frequency) ?? undefined) : undefined,
     donatedAt: (r.donated_at instanceof Date
       ? r.donated_at
       : new Date(String(r.donated_at))

@@ -57,8 +57,25 @@ const LOGO_BUFFER: Buffer | null = fs.existsSync(LOGO_PATH) ? fs.readFileSync(LO
 const STAMP_PATH = path.join(process.cwd(), "public", "images", "signature-stamp.png");
 const STAMP_BUFFER: Buffer | null = fs.existsSync(STAMP_PATH) ? fs.readFileSync(STAMP_PATH) : null;
 
+// Embedded Unicode font so the ₹ glyph renders (pdfkit's built-in Helvetica
+// has no rupee glyph and falls back to a superscript ¹). Used only for the
+// amount line; everything else stays Helvetica.
+const FONT_REG_PATH = path.join(process.cwd(), "public", "fonts", "DejaVuSans.ttf");
+const FONT_BOLD_PATH = path.join(process.cwd(), "public", "fonts", "DejaVuSans-Bold.ttf");
+const HAS_RUPEE_FONT = fs.existsSync(FONT_BOLD_PATH) && fs.existsSync(FONT_REG_PATH);
+
 export function fmtINR(n: number): string {
   return `₹ ${n.toLocaleString("en-IN")}`;
+}
+
+/** Amount string for the PDF: real ₹ when the embedded font is available, "Rs." fallback otherwise. */
+function amountStr(n: number): string {
+  const v = n.toLocaleString("en-IN");
+  return HAS_RUPEE_FONT ? `₹ ${v}` : `Rs. ${v}`;
+}
+
+function capitalise(s: string): string {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
 
 export function inrInWords(n: number): string {
@@ -102,6 +119,13 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Buffer> {
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
+    // Register the embedded ₹-capable font (used only for the amount line).
+    if (HAS_RUPEE_FONT) {
+      doc.registerFont("ABF", FONT_REG_PATH);
+      doc.registerFont("ABF-Bold", FONT_BOLD_PATH);
+    }
+    const AMOUNT_FONT = HAS_RUPEE_FONT ? "ABF-Bold" : "Helvetica-Bold";
+
     const W = doc.page.width;   // 595
     const H = doc.page.height;  // 842
     const PAD = 40;
@@ -132,10 +156,15 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Buffer> {
     let cursor = 132;
 
     // ===== RECEIPT META (3 rows compact) =====
+    const paymentType = data.frequencyLabel
+      ? `Recurring — ${capitalise(FREQUENCY_LABEL[data.frequencyLabel])}`
+      : "One-time";
+
     const meta: [string, string][] = [
       ["Receipt No.", data.receiptNumber],
       ["Date", fmtDate(data.donatedAt)],
       ["Payment ID", data.paymentId],
+      ["Payment Type", paymentType],
     ];
     doc.fontSize(10);
     meta.forEach(([k, v]) => {
@@ -184,8 +213,8 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Buffer> {
     doc.rect(PAD, cursor, CONTENT_W, amtCardH).fillAndStroke(Y, "#E5C200");
     doc.font("Helvetica").fontSize(9.5).fillColor(INK)
        .text("AMOUNT DONATED", PAD + 15, cursor + 10, { characterSpacing: 1.2 });
-    doc.font("Helvetica-Bold").fontSize(26).fillColor(INK)
-       .text(fmtINR(data.amountInr), PAD + 15, cursor + 24);
+    doc.font(AMOUNT_FONT).fontSize(26).fillColor(INK)
+       .text(amountStr(data.amountInr), PAD + 15, cursor + 24);
     doc.font("Helvetica-Oblique").fontSize(9.5).fillColor(INK)
        .text(wordsText, PAD + 15, cursor + 24 + 28 + 4, { width: CONTENT_W - 30 });
     cursor += amtCardH + 12;
@@ -207,14 +236,6 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Buffer> {
       cursor += 14;
     } else {
       cursor += 4;
-    }
-
-    // Recurring marker — only present when this charge belongs to a subscription.
-    if (data.frequencyLabel) {
-      doc.font("Helvetica-Oblique").fontSize(9).fillColor(MUTED)
-         .text(`Recurring donation · charged ${FREQUENCY_LABEL[data.frequencyLabel]}`,
-               PAD, cursor, { width: CONTENT_W });
-      cursor += 12;
     }
 
     rule(doc, PAD, cursor, W - PAD);
