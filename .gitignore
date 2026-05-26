@@ -27,3 +27,5 @@ pnpm-debug.log*
 
 # extraction artifacts (keep curated images in public/, not the raw dump)
 _extract/
+.vercel
+.env*
