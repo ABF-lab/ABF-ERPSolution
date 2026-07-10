@@ -57,6 +57,14 @@ function footerBlock(): string {
   `;
 }
 
+export type PaymentMethod = "online" | "bank" | "upi" | "cash";
+
+const PAYMENT_METHOD_LABEL: Record<Exclude<PaymentMethod, "online">, string> = {
+  bank: "Bank Transfer",
+  upi: "UPI",
+  cash: "Cash",
+};
+
 export interface SendReceiptParams {
   donorName: string;
   donorEmail: string;
@@ -64,11 +72,30 @@ export interface SendReceiptParams {
   receiptNumber: string;
   paymentId: string;
   pdfBuffer: Buffer;
+  paymentMethod?: PaymentMethod;
+  paymentReference?: string;
 }
 
 export async function sendDonorReceipt(p: SendReceiptParams) {
   const amount = p.amountInr.toLocaleString("en-IN");
   const date = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" });
+  const isOffline = p.paymentMethod && p.paymentMethod !== "online";
+  const modeRowHtml = isOffline
+    ? `
+          <tr>
+            <td style="padding:5px 0;color:#666">Payment mode</td>
+            <td style="padding:5px 0"><strong>${escapeHtml(PAYMENT_METHOD_LABEL[p.paymentMethod as Exclude<PaymentMethod, "online">])}</strong></td>
+          </tr>
+          ${p.paymentReference ? `
+          <tr>
+            <td style="padding:5px 0;color:#666">Reference</td>
+            <td style="padding:5px 0;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:13px">${escapeHtml(p.paymentReference)}</td>
+          </tr>` : ""}`
+    : `
+          <tr>
+            <td style="padding:5px 0;color:#666">Payment ID</td>
+            <td style="padding:5px 0;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:13px">${escapeHtml(p.paymentId)}</td>
+          </tr>`;
 
   const html = `
 <!DOCTYPE html>
@@ -102,10 +129,7 @@ export async function sendDonorReceipt(p: SendReceiptParams) {
             <td style="padding:5px 0;color:#666">Amount</td>
             <td style="padding:5px 0"><strong>₹ ${amount}</strong></td>
           </tr>
-          <tr>
-            <td style="padding:5px 0;color:#666">Payment ID</td>
-            <td style="padding:5px 0;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:13px">${escapeHtml(p.paymentId)}</td>
-          </tr>
+          ${modeRowHtml}
           <tr>
             <td style="padding:5px 0;color:#666">Date</td>
             <td style="padding:5px 0">${date}</td>
@@ -137,6 +161,13 @@ export async function sendDonorReceipt(p: SendReceiptParams) {
 
   // Plain-text body alongside HTML — multipart/alternative scores better with
   // spam filters and works for text-only clients.
+  const paymentLines = isOffline
+    ? [
+        `  Mode:      ${PAYMENT_METHOD_LABEL[p.paymentMethod as Exclude<PaymentMethod, "online">]}`,
+        ...(p.paymentReference ? [`  Reference: ${p.paymentReference}`] : []),
+      ]
+    : [`  Payment:   ${p.paymentId}`];
+
   const text = [
     `Thank you, ${p.donorName}.`,
     ``,
@@ -145,7 +176,7 @@ export async function sendDonorReceipt(p: SendReceiptParams) {
     `Receipt details:`,
     `  Receipt #: ${p.receiptNumber}`,
     `  Amount:    ₹ ${amount}`,
-    `  Payment:   ${p.paymentId}`,
+    ...paymentLines,
     `  Date:      ${date}`,
     ``,
     `Your 80G tax-exemption receipt is attached as a PDF — keep it safe and use it`,
@@ -190,11 +221,17 @@ export interface SendFinanceParams {
   receiptNumber: string;
   paymentId: string;
   pdfBuffer: Buffer;
+  paymentMethod?: PaymentMethod;
+  paymentReference?: string;
 }
 
 export async function sendFinanceNotification(p: SendFinanceParams) {
   const recipients = FINANCE_EMAIL.split(",").map((s) => s.trim()).filter(Boolean);
   const amount = p.amountInr.toLocaleString("en-IN");
+  const isOffline = p.paymentMethod && p.paymentMethod !== "online";
+  const financeModeRowHtml = isOffline
+    ? `<tr><td style="padding:6px 0;color:#666">Payment mode</td><td style="padding:6px 0"><strong>${escapeHtml(PAYMENT_METHOD_LABEL[p.paymentMethod as Exclude<PaymentMethod, "online">])}</strong>${p.paymentReference ? ` · ${escapeHtml(p.paymentReference)}` : ""}</td></tr>`
+    : `<tr><td style="padding:6px 0;color:#666">Payment ID</td><td style="padding:6px 0;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:13px">${escapeHtml(p.paymentId)}</td></tr>`;
 
   const html = `
 <!DOCTYPE html>
@@ -217,7 +254,7 @@ export async function sendFinanceNotification(p: SendFinanceParams) {
             <td style="padding:6px 0;font-weight:bold;font-size:20px;color:${INK}">₹ ${amount}</td>
           </tr>
           <tr><td style="padding:6px 0;color:#666">Receipt #</td><td style="padding:6px 0"><strong>${p.receiptNumber}</strong></td></tr>
-          <tr><td style="padding:6px 0;color:#666">Payment ID</td><td style="padding:6px 0;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:13px">${escapeHtml(p.paymentId)}</td></tr>
+          ${financeModeRowHtml}
           <tr><td style="padding:6px 0;color:#666">Donor name</td><td style="padding:6px 0">${escapeHtml(p.donorName)}</td></tr>
           <tr><td style="padding:6px 0;color:#666">Email</td><td style="padding:6px 0">${escapeHtml(p.donorEmail)}</td></tr>
           ${p.donorPhone ? `<tr><td style="padding:6px 0;color:#666">Phone</td><td style="padding:6px 0">${escapeHtml(p.donorPhone)}</td></tr>` : ""}
@@ -230,9 +267,9 @@ export async function sendFinanceNotification(p: SendFinanceParams) {
       </p>
 
       <div style="text-align:center;padding-top:12px;border-top:1px solid #EEE">
-        <a href="https://dashboard.razorpay.com/app/payments/${encodeURIComponent(p.paymentId)}" style="display:inline-block;background:${INK};color:#FFF;padding:10px 18px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:bold;margin:4px 6px">
+        ${isOffline ? "" : `<a href="https://dashboard.razorpay.com/app/payments/${encodeURIComponent(p.paymentId)}" style="display:inline-block;background:${INK};color:#FFF;padding:10px 18px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:bold;margin:4px 6px">
           Razorpay dashboard →
-        </a>
+        </a>`}
         <a href="${SITE_URL}/admin/donations" style="display:inline-block;color:${R};padding:10px 18px;text-decoration:none;font-size:13px;font-weight:bold;margin:4px 6px">
           Admin page →
         </a>

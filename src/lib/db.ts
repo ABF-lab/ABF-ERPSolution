@@ -58,6 +58,7 @@ const sql = ((strings: TemplateStringsArray, ...values: any[]) =>
   pool().sql(strings, ...values)) as ReturnType<typeof createPool>["sql"];
 
 export type DonorCategory = "general" | "zakat" | "sadqa" | "interest";
+export type PaymentMethod = "online" | "bank" | "upi" | "cash";
 export type Frequency = "monthly" | "quarterly" | "yearly";
 export type SubscriptionStatus =
   | "created"
@@ -81,6 +82,8 @@ export interface DonationRow {
   donorPan?: string;
   donorAddress?: string;
   donorCategory: DonorCategory;
+  paymentMethod: PaymentMethod;
+  paymentReference?: string;
   subscriptionId?: string;
   frequency?: Frequency; // joined from subscriptions when this row is a recurring charge
   donatedAt: string; // ISO
@@ -96,6 +99,8 @@ export interface InsertDonationInput {
   donorPan?: string;
   donorAddress?: string;
   donorCategory?: DonorCategory;
+  paymentMethod?: PaymentMethod;
+  paymentReference?: string;
   subscriptionId?: string;
   donatedAt: Date;
 }
@@ -134,12 +139,19 @@ export interface InsertSubscriptionInput {
 }
 
 const VALID_CATEGORIES: ReadonlySet<DonorCategory> = new Set(["general", "zakat", "sadqa", "interest"]);
+const VALID_PAYMENT_METHODS: ReadonlySet<PaymentMethod> = new Set(["online", "bank", "upi", "cash"]);
 const VALID_FREQUENCIES: ReadonlySet<Frequency> = new Set(["monthly", "quarterly", "yearly"]);
 
 /** Coerce any incoming string to a valid DonorCategory; defaults to "general". */
 export function normaliseCategory(raw: unknown): DonorCategory {
   const v = String(raw || "").toLowerCase().trim();
   return VALID_CATEGORIES.has(v as DonorCategory) ? (v as DonorCategory) : "general";
+}
+
+/** Coerce any incoming string to a valid PaymentMethod; defaults to "online". */
+export function normalisePaymentMethod(raw: unknown): PaymentMethod {
+  const v = String(raw || "").toLowerCase().trim();
+  return VALID_PAYMENT_METHODS.has(v as PaymentMethod) ? (v as PaymentMethod) : "online";
 }
 
 /** Coerce any incoming string to a valid Frequency, or null if not recurring. */
@@ -195,6 +207,18 @@ export async function initSchema(): Promise<void> {
     ADD COLUMN IF NOT EXISTS subscription_id TEXT
   `;
   await sql`CREATE INDEX IF NOT EXISTS idx_donations_subscription_id ON donations(subscription_id)`;
+
+  // Migration: payment_method/payment_reference — distinguishes Razorpay ("online")
+  // donations from admin-entered offline bills (bank/upi/cash). Existing rows are
+  // all online, so they backfill to the default.
+  await sql`
+    ALTER TABLE donations
+    ADD COLUMN IF NOT EXISTS payment_method TEXT NOT NULL DEFAULT 'online'
+  `;
+  await sql`
+    ALTER TABLE donations
+    ADD COLUMN IF NOT EXISTS payment_reference TEXT
+  `;
 
   // Cache of Razorpay plans we've created — one per (amount, frequency) combo.
   await sql`
@@ -269,16 +293,18 @@ export async function insertDonation(
 
   const receiptNumber = await nextReceiptNumber(input.donatedAt);
   const category = input.donorCategory || "general";
+  const method = input.paymentMethod || "online";
   await sql`
     INSERT INTO donations (
       receipt_number, payment_id, order_id, amount_inr,
       donor_name, donor_email, donor_phone, donor_pan, donor_address,
-      donor_category, subscription_id, donated_at
+      donor_category, payment_method, payment_reference, subscription_id, donated_at
     ) VALUES (
       ${receiptNumber}, ${input.paymentId}, ${input.orderId}, ${input.amountInr},
       ${input.donorName}, ${input.donorEmail}, ${input.donorPhone || null},
       ${input.donorPan || null}, ${input.donorAddress || null},
-      ${category}, ${input.subscriptionId || null}, ${input.donatedAt.toISOString()}
+      ${category}, ${method}, ${input.paymentReference || null},
+      ${input.subscriptionId || null}, ${input.donatedAt.toISOString()}
     )
   `;
   return { receiptNumber, isNew: true };
@@ -289,16 +315,18 @@ export async function manualInsertDonation(
   input: InsertDonationInput & { receiptNumber: string }
 ): Promise<void> {
   const category = input.donorCategory || "general";
+  const method = input.paymentMethod || "online";
   await sql`
     INSERT INTO donations (
       receipt_number, payment_id, order_id, amount_inr,
       donor_name, donor_email, donor_phone, donor_pan, donor_address,
-      donor_category, subscription_id, donated_at
+      donor_category, payment_method, payment_reference, subscription_id, donated_at
     ) VALUES (
       ${input.receiptNumber}, ${input.paymentId}, ${input.orderId}, ${input.amountInr},
       ${input.donorName}, ${input.donorEmail}, ${input.donorPhone || null},
       ${input.donorPan || null}, ${input.donorAddress || null},
-      ${category}, ${input.subscriptionId || null}, ${input.donatedAt.toISOString()}
+      ${category}, ${method}, ${input.paymentReference || null},
+      ${input.subscriptionId || null}, ${input.donatedAt.toISOString()}
     )
   `;
 }
@@ -308,7 +336,7 @@ export async function listDonations(): Promise<DonationRow[]> {
   const { rows } = await sql`
     SELECT d.id, d.receipt_number, d.payment_id, d.order_id, d.amount_inr,
            d.donor_name, d.donor_email, d.donor_phone, d.donor_pan, d.donor_address,
-           d.donor_category, d.subscription_id, d.donated_at,
+           d.donor_category, d.payment_method, d.payment_reference, d.subscription_id, d.donated_at,
            s.frequency AS frequency
     FROM donations d
     LEFT JOIN subscriptions s ON s.razorpay_subscription_id = d.subscription_id
@@ -324,7 +352,7 @@ export async function findDonationByPaymentId(
   const { rows } = await sql`
     SELECT id, receipt_number, payment_id, order_id, amount_inr,
            donor_name, donor_email, donor_phone, donor_pan, donor_address,
-           donor_category, subscription_id, donated_at
+           donor_category, payment_method, payment_reference, subscription_id, donated_at
     FROM donations
     WHERE payment_id = ${paymentId}
     LIMIT 1
@@ -461,6 +489,8 @@ function toDonationRow(r: Record<string, unknown>): DonationRow {
     donorPan: r.donor_pan ? String(r.donor_pan) : undefined,
     donorAddress: r.donor_address ? String(r.donor_address) : undefined,
     donorCategory: normaliseCategory(r.donor_category),
+    paymentMethod: normalisePaymentMethod(r.payment_method),
+    paymentReference: r.payment_reference ? String(r.payment_reference) : undefined,
     subscriptionId: r.subscription_id ? String(r.subscription_id) : undefined,
     frequency: r.frequency ? (normaliseFrequency(r.frequency) ?? undefined) : undefined,
     donatedAt: (r.donated_at instanceof Date

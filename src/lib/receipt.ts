@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 export type DonorCategory = "general" | "zakat" | "sadqa" | "interest";
+export type PaymentMethod = "online" | "bank" | "upi" | "cash";
 export type FrequencyLabel = "monthly" | "quarterly" | "yearly";
 
 const CATEGORY_LABEL: Record<DonorCategory, string> = {
@@ -10,6 +11,12 @@ const CATEGORY_LABEL: Record<DonorCategory, string> = {
   zakat: "Zakat",
   sadqa: "Sadqa",
   interest: "Interest Money",
+};
+
+const PAYMENT_METHOD_LABEL: Record<Exclude<PaymentMethod, "online">, string> = {
+  bank: "Bank Transfer",
+  upi: "UPI",
+  cash: "Cash",
 };
 
 const FREQUENCY_LABEL: Record<FrequencyLabel, string> = {
@@ -32,6 +39,8 @@ export interface ReceiptData {
   paymentId: string;
   donorCategory?: DonorCategory;
   frequencyLabel?: FrequencyLabel;
+  paymentMethod?: PaymentMethod;
+  paymentReference?: string;
 }
 
 const ABF = {
@@ -155,17 +164,24 @@ export async function generateReceiptPdf(data: ReceiptData): Promise<Buffer> {
 
     let cursor = 132;
 
-    // ===== RECEIPT META (3 rows compact) =====
+    // ===== RECEIPT META (3-4 rows compact) =====
     const paymentType = data.frequencyLabel
       ? `Recurring — ${capitalise(FREQUENCY_LABEL[data.frequencyLabel])}`
       : "One-time";
 
+    const isOffline = data.paymentMethod && data.paymentMethod !== "online";
+
     const meta: [string, string][] = [
       ["Receipt No.", data.receiptNumber],
       ["Date", fmtDate(data.donatedAt)],
-      ["Payment ID", data.paymentId],
-      ["Payment Type", paymentType],
     ];
+    if (isOffline) {
+      meta.push(["Payment Mode", PAYMENT_METHOD_LABEL[data.paymentMethod as Exclude<PaymentMethod, "online">]]);
+      if (data.paymentReference) meta.push(["Reference No.", data.paymentReference]);
+    } else {
+      meta.push(["Payment ID", data.paymentId]);
+    }
+    meta.push(["Payment Type", paymentType]);
     doc.fontSize(10);
     meta.forEach(([k, v]) => {
       doc.font("Helvetica").fillColor(MUTED).text(k, PAD, cursor, { width: 100 });

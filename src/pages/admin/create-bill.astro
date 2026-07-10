@@ -1,0 +1,271 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+export const prerender = false;
+---
+
+<BaseLayout title="Add offline bill · Admin — ABF" description="Manually record a bank/UPI/cash donation and issue an 80G receipt" hideImpactStrip={true}>
+  <section class="container-x py-10 sm:py-14 max-w-2xl">
+    <div class="mb-6">
+      <span class="chip-red">Admin</span>
+      <h1 class="font-display text-3xl sm:text-4xl mt-3">Add offline bill</h1>
+      <p class="mt-1 text-sm text-brand-ink/60">
+        For donations received directly by bank transfer, UPI, or cash. An 80G receipt is generated and emailed to the donor automatically.
+      </p>
+      <a href="/admin/donations" class="inline-block mt-3 text-sm text-brand-red hover:underline font-semibold">← Back to donations</a>
+    </div>
+
+    <form id="billForm" class="rounded-3xl bg-white shadow-card ring-1 ring-brand-ink/10 p-5 sm:p-8 space-y-6">
+      <!-- Payment method -->
+      <div>
+        <label class="text-[11px] uppercase tracking-[0.18em] font-semibold text-brand-ink/60">Payment method</label>
+        <div class="mt-3 grid grid-cols-3 gap-2">
+          {[
+            ["bank", "Bank Transfer"],
+            ["upi", "UPI"],
+            ["cash", "Cash"],
+          ].map(([v, label]) => (
+            <button
+              type="button"
+              data-method={v}
+              aria-pressed={v === "bank" ? "true" : "false"}
+              class:list={[
+                "method-chip rounded-xl ring-1 ring-brand-ink/10 bg-brand-cream hover:bg-brand-yellow transition-colors px-3 py-2.5 sm:py-3 font-semibold text-sm sm:text-base",
+                v === "bank" && "ring-2 ring-brand-red bg-brand-yellow",
+              ]}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <p id="cashNotice" class="hidden mt-2 text-xs text-brand-red font-semibold">
+          ⚠ Cash donations above ₹2,000 are not eligible for an 80G deduction — use Bank Transfer or UPI instead.
+        </p>
+      </div>
+
+      <!-- Amount -->
+      <div>
+        <label class="block text-sm font-semibold text-brand-ink mb-1.5">Amount <span class="text-brand-red">*</span></label>
+        <div class="relative">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-brand-ink/55 font-display text-lg">₹</span>
+          <input
+            id="amountInput"
+            type="number"
+            min="100"
+            step="1"
+            placeholder="Amount received"
+            class="w-full pl-9 pr-4 py-3 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none font-display text-lg"
+            required
+          />
+        </div>
+        <p id="panNotice" class="hidden mt-2 text-xs text-brand-red font-semibold">⚠ PAN required for bills of ₹2,000 or more (per 80G regulations)</p>
+      </div>
+
+      <!-- Donor details -->
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div class="sm:col-span-2">
+          <label class="block text-sm font-semibold text-brand-ink mb-1.5">Full name <span class="text-brand-red">*</span></label>
+          <input id="nameInput" type="text" required class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none" placeholder="As per PAN / official records" />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-brand-ink mb-1.5">Email <span class="text-brand-red">*</span></label>
+          <input id="emailInput" type="email" required class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none" placeholder="receipt sent here" />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-brand-ink mb-1.5">Phone</label>
+          <input id="phoneInput" type="tel" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none" placeholder="+91 …" />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-brand-ink mb-1.5">Date received</label>
+          <input id="dateInput" type="date" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none" />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-brand-ink mb-1.5">Reference no. <span class="text-brand-ink/50 font-normal">(optional)</span></label>
+          <input id="referenceInput" type="text" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none" placeholder="Bank UTR / UPI ref / cheque no." />
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-sm font-semibold text-brand-ink mb-1.5">Category</label>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" role="radiogroup" aria-label="Donation category">
+            {[
+              ["general","General"],
+              ["zakat","Zakat"],
+              ["sadqa","Sadqa"],
+              ["interest","Interest Money"],
+            ].map(([v, label]) => (
+              <button
+                type="button"
+                role="radio"
+                data-category={v}
+                aria-checked={v === "general" ? "true" : "false"}
+                class:list={[
+                  "category-chip rounded-xl ring-1 ring-brand-ink/10 bg-brand-cream hover:bg-brand-yellow transition-colors px-3 py-2.5 font-semibold text-sm",
+                  v === "general" && "ring-2 ring-brand-red bg-brand-yellow",
+                ]}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div id="panRow" class="sm:col-span-2 hidden">
+          <label class="block text-sm font-semibold text-brand-ink mb-1.5">PAN <span class="text-brand-red">*</span></label>
+          <input id="panInput" type="text" maxlength="10" pattern="[A-Za-z]{5}[0-9]{4}[A-Za-z]{1}" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none uppercase font-mono" placeholder="ABCDE1234F" />
+          <p class="mt-1 text-xs text-brand-ink/55">Required for 80G receipt on bills of ₹2,000+</p>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-sm font-semibold text-brand-ink mb-1.5">Address <span class="text-brand-ink/50 font-normal">(optional)</span></label>
+          <textarea id="addressInput" rows="2" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none resize-none" placeholder="Will appear on the 80G receipt"></textarea>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div>
+        <button id="submitBtn" type="submit" class="btn-primary w-full justify-center text-base font-semibold">
+          <span id="submitLabel">Create bill &amp; send 80G receipt →</span>
+          <span id="submitSpinner" class="hidden">Processing…</span>
+        </button>
+        <p id="errorMsg" class="hidden mt-3 text-sm text-brand-red font-semibold text-center"></p>
+        <p id="successMsg" class="hidden mt-3 text-sm text-green-700 font-semibold text-center"></p>
+      </div>
+    </form>
+  </section>
+
+  <script>
+    type CreateBillResp =
+      | { ok: true; receiptNumber: string; emailError?: string | null }
+      | { ok?: false; error: string };
+
+    const form = document.getElementById("billForm") as HTMLFormElement;
+    const amountInput = document.getElementById("amountInput") as HTMLInputElement;
+    const nameInput = document.getElementById("nameInput") as HTMLInputElement;
+    const emailInput = document.getElementById("emailInput") as HTMLInputElement;
+    const phoneInput = document.getElementById("phoneInput") as HTMLInputElement;
+    const dateInput = document.getElementById("dateInput") as HTMLInputElement;
+    const referenceInput = document.getElementById("referenceInput") as HTMLInputElement;
+    const panInput = document.getElementById("panInput") as HTMLInputElement;
+    const addressInput = document.getElementById("addressInput") as HTMLTextAreaElement;
+    const panRow = document.getElementById("panRow")!;
+    const panNotice = document.getElementById("panNotice")!;
+    const cashNotice = document.getElementById("cashNotice")!;
+    const submitBtn = document.getElementById("submitBtn") as HTMLButtonElement;
+    const submitLabel = document.getElementById("submitLabel")!;
+    const submitSpinner = document.getElementById("submitSpinner")!;
+    const errorMsg = document.getElementById("errorMsg")!;
+    const successMsg = document.getElementById("successMsg")!;
+
+    let selectedMethod: "bank" | "upi" | "cash" = "bank";
+    let selectedCategory: "general" | "zakat" | "sadqa" | "interest" = "general";
+
+    function showError(msg: string) {
+      errorMsg.textContent = msg;
+      errorMsg.classList.remove("hidden");
+    }
+    function clearMessages() {
+      errorMsg.classList.add("hidden"); errorMsg.textContent = "";
+      successMsg.classList.add("hidden"); successMsg.textContent = "";
+    }
+    function setBusy(busy: boolean) {
+      submitBtn.disabled = busy;
+      submitLabel.classList.toggle("hidden", busy);
+      submitSpinner.classList.toggle("hidden", !busy);
+    }
+
+    function updateCashNotice() {
+      const amt = Number(amountInput.value);
+      cashNotice.classList.toggle("hidden", !(selectedMethod === "cash" && amt > 2000));
+    }
+
+    document.querySelectorAll<HTMLButtonElement>(".method-chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        selectedMethod = btn.dataset.method as typeof selectedMethod;
+        document.querySelectorAll<HTMLButtonElement>(".method-chip").forEach((b) => {
+          b.classList.remove("ring-2", "ring-brand-red", "bg-brand-yellow");
+          b.classList.add("bg-brand-cream");
+          b.setAttribute("aria-pressed", "false");
+        });
+        btn.classList.add("ring-2", "ring-brand-red", "bg-brand-yellow");
+        btn.classList.remove("bg-brand-cream");
+        btn.setAttribute("aria-pressed", "true");
+        updateCashNotice();
+      });
+    });
+
+    document.querySelectorAll<HTMLButtonElement>(".category-chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        selectedCategory = btn.dataset.category as typeof selectedCategory;
+        document.querySelectorAll<HTMLButtonElement>(".category-chip").forEach((b) => {
+          b.classList.remove("ring-2", "ring-brand-red", "bg-brand-yellow");
+          b.classList.add("bg-brand-cream");
+          b.setAttribute("aria-checked", "false");
+        });
+        btn.classList.add("ring-2", "ring-brand-red", "bg-brand-yellow");
+        btn.classList.remove("bg-brand-cream");
+        btn.setAttribute("aria-checked", "true");
+      });
+    });
+
+    amountInput.addEventListener("input", () => {
+      const amt = Number(amountInput.value);
+      const requirePan = amt >= 2000;
+      panRow.classList.toggle("hidden", !requirePan);
+      panNotice.classList.toggle("hidden", !requirePan);
+      panInput.required = requirePan;
+      updateCashNotice();
+    });
+
+    panInput.addEventListener("input", () => {
+      panInput.value = panInput.value.toUpperCase();
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      clearMessages();
+
+      const amountInr = Number(amountInput.value);
+      if (selectedMethod === "cash" && amountInr > 2000) {
+        showError("Cash donations above ₹2,000 are not eligible for an 80G deduction. Please select Bank Transfer or UPI.");
+        return;
+      }
+
+      const payload = {
+        amountInr,
+        donorName: nameInput.value.trim(),
+        donorEmail: emailInput.value.trim(),
+        donorPhone: phoneInput.value.trim(),
+        donorCategory: selectedCategory,
+        donorPan: panInput.value.trim().toUpperCase(),
+        donorAddress: addressInput.value.trim(),
+        paymentMethod: selectedMethod,
+        paymentReference: referenceInput.value.trim(),
+        donatedAt: dateInput.value ? new Date(dateInput.value).toISOString() : undefined,
+      };
+
+      setBusy(true);
+      try {
+        const res = await fetch("/api/admin/create-bill", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data: CreateBillResp = await res.json();
+        if (!res.ok || !("ok" in data) || !data.ok) {
+          throw new Error("error" in data ? data.error : "Could not create bill");
+        }
+        successMsg.textContent = data.emailError
+          ? `Bill created — receipt ${data.receiptNumber}. ⚠ Email failed to send: ${data.emailError}`
+          : `Bill created — receipt ${data.receiptNumber}. 80G receipt emailed to ${payload.donorEmail}.`;
+        successMsg.classList.remove("hidden");
+        form.reset();
+        document.querySelectorAll<HTMLButtonElement>(".method-chip")[0]?.click();
+        document.querySelectorAll<HTMLButtonElement>(".category-chip")[0]?.click();
+        panRow.classList.add("hidden");
+        panNotice.classList.add("hidden");
+        cashNotice.classList.add("hidden");
+      } catch (err) {
+        showError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+      } finally {
+        setBusy(false);
+      }
+    });
+  </script>
+</BaseLayout>

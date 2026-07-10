@@ -14,6 +14,7 @@ export const prerender = false;
       </div>
       <div class="flex items-center gap-3 flex-wrap">
         <span id="totals" class="text-sm font-semibold text-brand-ink/70">Loading…</span>
+        <a href="/admin/create-bill" class="btn-primary text-sm">＋ Add offline bill</a>
         <a href="/api/admin/receipt-preview" target="_blank" rel="noopener" class="btn-secondary text-sm">Preview receipt template →</a>
         <button id="refreshBtn" class="btn-secondary text-sm">Refresh</button>
       </div>
@@ -51,11 +52,12 @@ export const prerender = false;
               <th class="px-3 py-3 font-semibold">Receipt #</th>
               <th class="px-3 py-3 font-semibold text-right whitespace-nowrap">Amount</th>
               <th class="px-3 py-3 font-semibold">Type</th>
+              <th class="px-3 py-3 font-semibold">Method</th>
               <th class="px-3 py-3 font-semibold">Donor</th>
               <th class="px-3 py-3 font-semibold">Category</th>
               <th class="px-3 py-3 font-semibold">Email</th>
               <th class="px-3 py-3 font-semibold">PAN</th>
-              <th class="px-3 py-3 font-semibold">Payment ID</th>
+              <th class="px-3 py-3 font-semibold">Payment ID / Ref</th>
               <th class="px-3 py-3 font-semibold">Receipt</th>
             </tr>
           </thead>
@@ -76,6 +78,8 @@ export const prerender = false;
       donorPhone?: string;
       donorPan?: string;
       donorCategory?: string;
+      paymentMethod?: string;
+      paymentReference?: string;
       subscriptionId?: string;
       frequency?: string;
       donatedAt: string;
@@ -85,6 +89,12 @@ export const prerender = false;
       zakat: "Zakat",
       sadqa: "Sadqa",
       interest: "Interest",
+    };
+    const METHOD_LABEL: Record<string, string> = {
+      online: "Online",
+      bank: "Bank",
+      upi: "UPI",
+      cash: "Cash",
     };
     const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
@@ -140,20 +150,38 @@ export const prerender = false;
           return `<span class="inline-flex items-center rounded-full bg-brand-ink/8 px-2.5 py-1 text-[11px] font-semibold text-brand-ink/70 whitespace-nowrap">One-time</span>`;
         }
 
+        function methodPill(r: Row): string {
+          const method = r.paymentMethod || "online";
+          const label = METHOD_LABEL[method] || cap(method);
+          if (method === "online") {
+            return `<span class="inline-flex items-center rounded-full bg-brand-ink/8 px-2.5 py-1 text-[11px] font-semibold text-brand-ink/70 whitespace-nowrap">${label}</span>`;
+          }
+          return `<span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-semibold text-green-800 whitespace-nowrap">${label}</span>`;
+        }
+
+        function paymentCell(r: Row): string {
+          const method = r.paymentMethod || "online";
+          if (method === "online") {
+            return `<a class="text-brand-red hover:underline" target="_blank" href="https://dashboard.razorpay.com/app/payments/${encodeURIComponent(r.paymentId)}">${escapeHtml(r.paymentId)}</a>`;
+          }
+          return r.paymentReference ? escapeHtml(r.paymentReference) : `<span class="text-brand-ink/40">—</span>`;
+        }
+
         $("tbody").innerHTML = rows.map((r) => `
           <tr class="hover:bg-brand-cream/40">
             <td class="px-3 py-2.5 whitespace-nowrap text-brand-ink/70">${fmtDate(r.donatedAt)}</td>
             <td class="px-3 py-2.5 font-mono text-xs">${escapeHtml(r.receiptNumber)}</td>
             <td class="px-3 py-2.5 text-right font-display whitespace-nowrap">${fmtINR(Number(r.amountInr) || 0)}</td>
             <td class="px-3 py-2.5">${typePill(r)}</td>
+            <td class="px-3 py-2.5">${methodPill(r)}</td>
             <td class="px-3 py-2.5 font-semibold">${escapeHtml(r.donorName || "")}</td>
             <td class="px-3 py-2.5 text-brand-ink/80">${escapeHtml(CATEGORY_LABEL[r.donorCategory || "general"] || "General")}</td>
             <td class="px-3 py-2.5 text-brand-ink/70 break-all">${escapeHtml(r.donorEmail || "")}</td>
             <td class="px-3 py-2.5 font-mono text-xs">${escapeHtml(r.donorPan || "—")}</td>
-            <td class="px-3 py-2.5 font-mono text-xs"><a class="text-brand-red hover:underline" target="_blank" href="https://dashboard.razorpay.com/app/payments/${encodeURIComponent(r.paymentId)}">${escapeHtml(r.paymentId)}</a></td>
+            <td class="px-3 py-2.5 font-mono text-xs">${paymentCell(r)}</td>
             <td class="px-3 py-2.5 whitespace-nowrap"><a class="inline-flex items-center gap-1 text-brand-red hover:underline font-semibold text-xs" href="/api/admin/receipt?paymentId=${encodeURIComponent(r.paymentId)}">⬇ PDF</a></td>
           </tr>
-        `).join("") || `<tr><td colspan="10" class="px-3 py-8 text-center text-brand-ink/55">No donations yet.</td></tr>`;
+        `).join("") || `<tr><td colspan="11" class="px-3 py-8 text-center text-brand-ink/55">No donations yet.</td></tr>`;
 
         $("loading").classList.add("hidden");
         $("tableWrap").classList.remove("hidden");
