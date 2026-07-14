@@ -33,8 +33,8 @@ export const POST: APIRoute = async ({ request }) => {
     const body = await request.json();
 
     const amountInr = Number(body.amountInr);
-    if (!Number.isFinite(amountInr) || amountInr < 100) {
-      return json({ error: "Minimum bill amount is ₹100" }, 400);
+    if (!Number.isFinite(amountInr) || amountInr < 1) {
+      return json({ error: "Minimum bill amount is ₹1" }, 400);
     }
     if (amountInr > 1_00_00_000) {
       return json({ error: "Amount too large — please split into multiple bills or contact tech support" }, 400);

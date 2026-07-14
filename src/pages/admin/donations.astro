@@ -17,11 +17,59 @@ export const prerender = false;
         <a href="/admin/create-bill" class="btn-primary text-sm">＋ Add offline bill</a>
         <a href="/api/admin/receipt-preview" target="_blank" rel="noopener" class="btn-secondary text-sm">Preview receipt template →</a>
         <button id="refreshBtn" class="btn-secondary text-sm">Refresh</button>
+        <button id="exportCsvBtn" type="button" class="btn-secondary text-sm">⬇ Export CSV</button>
       </div>
     </div>
 
     <div id="loading" class="rounded-2xl bg-brand-cream p-8 text-center text-brand-ink/60">Loading donations…</div>
     <div id="error" class="hidden rounded-2xl bg-brand-red/10 text-brand-red p-6 text-sm font-semibold"></div>
+
+    <!-- Filters -->
+    <div id="filterBar" class="hidden mb-6 rounded-2xl bg-white ring-1 ring-brand-ink/10 p-4 sm:p-5">
+      <div class="flex flex-wrap items-end gap-3">
+        <div>
+          <label for="filterMethod" class="block text-[11px] uppercase tracking-wider font-semibold text-brand-ink/55 mb-1">Method</label>
+          <select id="filterMethod" class="rounded-lg ring-1 ring-brand-ink/15 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-brand-red focus:outline-none">
+            <option value="">All</option>
+            <option value="online">Online</option>
+            <option value="bank">Bank</option>
+            <option value="upi">UPI</option>
+            <option value="cash">Cash</option>
+          </select>
+        </div>
+        <div>
+          <label for="filterCategory" class="block text-[11px] uppercase tracking-wider font-semibold text-brand-ink/55 mb-1">Category</label>
+          <select id="filterCategory" class="rounded-lg ring-1 ring-brand-ink/15 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-brand-red focus:outline-none">
+            <option value="">All</option>
+            <option value="general">General</option>
+            <option value="zakat">Zakat</option>
+            <option value="sadqa">Sadqa</option>
+            <option value="interest">Interest</option>
+          </select>
+        </div>
+        <div>
+          <label for="filterType" class="block text-[11px] uppercase tracking-wider font-semibold text-brand-ink/55 mb-1">Type</label>
+          <select id="filterType" class="rounded-lg ring-1 ring-brand-ink/15 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-brand-red focus:outline-none">
+            <option value="">All</option>
+            <option value="onetime">One-time</option>
+            <option value="recurring">Recurring</option>
+          </select>
+        </div>
+        <div>
+          <label for="filterDateFrom" class="block text-[11px] uppercase tracking-wider font-semibold text-brand-ink/55 mb-1">From</label>
+          <input id="filterDateFrom" type="date" class="rounded-lg ring-1 ring-brand-ink/15 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-red focus:outline-none" />
+        </div>
+        <div>
+          <label for="filterDateTo" class="block text-[11px] uppercase tracking-wider font-semibold text-brand-ink/55 mb-1">To</label>
+          <input id="filterDateTo" type="date" class="rounded-lg ring-1 ring-brand-ink/15 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-red focus:outline-none" />
+        </div>
+        <div class="flex-1 min-w-[200px]">
+          <label for="filterSearch" class="block text-[11px] uppercase tracking-wider font-semibold text-brand-ink/55 mb-1">Search</label>
+          <input id="filterSearch" type="search" placeholder="Name, email, receipt #, reference…" class="w-full rounded-lg ring-1 ring-brand-ink/15 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-red focus:outline-none" />
+        </div>
+        <button id="clearFiltersBtn" type="button" class="btn-secondary text-sm">Clear filters</button>
+      </div>
+    </div>
 
     <!-- Summary cards -->
     <div id="summary" class="hidden mb-6 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -77,12 +125,21 @@ export const prerender = false;
       donorEmail: string;
       donorPhone?: string;
       donorPan?: string;
+      donorAddress?: string;
       donorCategory?: string;
       paymentMethod?: string;
       paymentReference?: string;
       subscriptionId?: string;
       frequency?: string;
       donatedAt: string;
+    }
+    interface Filters {
+      method: string;
+      category: string;
+      type: string;
+      dateFrom: string;
+      dateTo: string;
+      q: string;
     }
     const CATEGORY_LABEL: Record<string, string> = {
       general: "General",
@@ -100,74 +157,118 @@ export const prerender = false;
 
     const $ = (id: string) => document.getElementById(id)!;
     const fmtINR = (n: number) => `₹ ${n.toLocaleString("en-IN")}`;
+    // Fixed to IST regardless of the admin's browser/OS timezone, so the displayed
+    // date always agrees with which calendar day the date-range filter buckets it into.
     const fmtDate = (iso: string) => {
       try {
         return new Date(iso).toLocaleString("en-IN", {
           day: "2-digit", month: "short", year: "numeric",
           hour: "2-digit", minute: "2-digit",
+          timeZone: "Asia/Kolkata",
         });
       } catch { return iso; }
     };
     const escapeHtml = (s: string) =>
       s.replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]!));
 
-    async function load() {
-      $("loading").classList.remove("hidden");
-      $("tableWrap").classList.add("hidden");
-      $("error").classList.add("hidden");
-      try {
-        const res = await fetch("/api/admin/donations", { cache: "no-store" });
-        const data = await res.json();
-        if (!res.ok || !data.ok) throw new Error(data.error || "Failed to load");
-        const rows: Row[] = data.donations || [];
-        rows.sort((a, b) => b.donatedAt.localeCompare(a.donatedAt));
+    // India is a single fixed UTC+5:30 offset (no DST) — no timezone library needed.
+    function istDayStartUtcMs(dateStr: string): number {
+      return new Date(`${dateStr}T00:00:00+05:30`).getTime();
+    }
 
-        const total = rows.reduce((s, r) => s + (Number(r.amountInr) || 0), 0);
-        $("totals").textContent = `${rows.length} donations · ${fmtINR(total)} total`;
+    let allRows: Row[] = [];
+    let filters: Filters = { method: "", category: "", type: "", dateFrom: "", dateTo: "", q: "" };
 
-        // ---- Summary cards ----
-        const recurringCount = rows.filter((r) => r.subscriptionId).length;
-        const oneTimeCount = rows.length - recurringCount;
-        const byCat: Record<string, number> = {};
-        rows.forEach((r) => {
-          const c = r.donorCategory || "general";
-          byCat[c] = (byCat[c] || 0) + (Number(r.amountInr) || 0);
-        });
-        $("sumTotal").textContent = fmtINR(total);
-        $("sumCount").textContent = String(rows.length);
-        $("sumType").textContent = `${oneTimeCount} / ${recurringCount}`;
-        $("sumCategory").innerHTML = ["general", "zakat", "sadqa", "interest"]
-          .filter((c) => byCat[c])
-          .map((c) => `<div><span class="text-brand-ink/55">${CATEGORY_LABEL[c]}:</span> <strong>${fmtINR(byCat[c])}</strong></div>`)
-          .join("") || '<div class="text-brand-ink/45">—</div>';
-        $("summary").classList.remove("hidden");
+    function filtersActive(): boolean {
+      return !!(filters.method || filters.category || filters.type || filters.dateFrom || filters.dateTo || filters.q);
+    }
 
-        function typePill(r: Row): string {
-          if (r.subscriptionId) {
-            const freq = r.frequency ? ` — ${cap(r.frequency)}` : "";
-            return `<span class="inline-flex items-center rounded-full bg-brand-yellow px-2.5 py-1 text-[11px] font-semibold text-brand-ink whitespace-nowrap">🔁 Recurring${freq}</span>`;
-          }
-          return `<span class="inline-flex items-center rounded-full bg-brand-ink/8 px-2.5 py-1 text-[11px] font-semibold text-brand-ink/70 whitespace-nowrap">One-time</span>`;
-        }
+    function applyFilters(rows: Row[], f: Filters): Row[] {
+      let out = rows;
+      if (f.method) out = out.filter((r) => (r.paymentMethod || "online") === f.method);
+      if (f.category) out = out.filter((r) => (r.donorCategory || "general") === f.category);
+      if (f.type === "onetime") out = out.filter((r) => !r.subscriptionId);
+      if (f.type === "recurring") out = out.filter((r) => !!r.subscriptionId);
+      if (f.dateFrom) {
+        const lower = istDayStartUtcMs(f.dateFrom);
+        out = out.filter((r) => new Date(r.donatedAt).getTime() >= lower);
+      }
+      if (f.dateTo) {
+        const upper = istDayStartUtcMs(f.dateTo) + 24 * 60 * 60 * 1000;
+        out = out.filter((r) => new Date(r.donatedAt).getTime() < upper);
+      }
+      if (f.q.trim()) {
+        const q = f.q.trim().toLowerCase();
+        out = out.filter((r) =>
+          (r.donorName || "").toLowerCase().includes(q) ||
+          (r.donorEmail || "").toLowerCase().includes(q) ||
+          (r.receiptNumber || "").toLowerCase().includes(q) ||
+          (r.paymentId || "").toLowerCase().includes(q) ||
+          (r.paymentReference || "").toLowerCase().includes(q)
+        );
+      }
+      return out;
+    }
 
-        function methodPill(r: Row): string {
-          const method = r.paymentMethod || "online";
-          const label = METHOD_LABEL[method] || cap(method);
-          if (method === "online") {
-            return `<span class="inline-flex items-center rounded-full bg-brand-ink/8 px-2.5 py-1 text-[11px] font-semibold text-brand-ink/70 whitespace-nowrap">${label}</span>`;
-          }
-          return `<span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-semibold text-green-800 whitespace-nowrap">${label}</span>`;
-        }
+    function typePill(r: Row): string {
+      if (r.subscriptionId) {
+        const freq = r.frequency ? ` — ${cap(r.frequency)}` : "";
+        return `<span class="inline-flex items-center rounded-full bg-brand-yellow px-2.5 py-1 text-[11px] font-semibold text-brand-ink whitespace-nowrap">🔁 Recurring${freq}</span>`;
+      }
+      return `<span class="inline-flex items-center rounded-full bg-brand-ink/8 px-2.5 py-1 text-[11px] font-semibold text-brand-ink/70 whitespace-nowrap">One-time</span>`;
+    }
 
-        function paymentCell(r: Row): string {
-          const method = r.paymentMethod || "online";
-          if (method === "online") {
-            return `<a class="text-brand-red hover:underline" target="_blank" href="https://dashboard.razorpay.com/app/payments/${encodeURIComponent(r.paymentId)}">${escapeHtml(r.paymentId)}</a>`;
-          }
-          return r.paymentReference ? escapeHtml(r.paymentReference) : `<span class="text-brand-ink/40">—</span>`;
-        }
+    function methodPill(r: Row): string {
+      const method = r.paymentMethod || "online";
+      const label = METHOD_LABEL[method] || cap(method);
+      if (method === "online") {
+        return `<span class="inline-flex items-center rounded-full bg-brand-ink/8 px-2.5 py-1 text-[11px] font-semibold text-brand-ink/70 whitespace-nowrap">${label}</span>`;
+      }
+      return `<span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-semibold text-green-800 whitespace-nowrap">${label}</span>`;
+    }
 
-        $("tbody").innerHTML = rows.map((r) => `
+    function paymentCell(r: Row): string {
+      const method = r.paymentMethod || "online";
+      if (method === "online") {
+        return `<a class="text-brand-red hover:underline" target="_blank" href="https://dashboard.razorpay.com/app/payments/${encodeURIComponent(r.paymentId)}">${escapeHtml(r.paymentId)}</a>`;
+      }
+      return r.paymentReference ? escapeHtml(r.paymentReference) : `<span class="text-brand-ink/40">—</span>`;
+    }
+
+    function renderTotals(visible: Row[]) {
+      const total = visible.reduce((s, r) => s + (Number(r.amountInr) || 0), 0);
+      $("totals").textContent = filtersActive()
+        ? `${visible.length} of ${allRows.length} donations · ${fmtINR(total)} total (filtered)`
+        : `${visible.length} donations · ${fmtINR(total)} total`;
+    }
+
+    function renderSummary(visible: Row[]) {
+      const total = visible.reduce((s, r) => s + (Number(r.amountInr) || 0), 0);
+      const recurringCount = visible.filter((r) => r.subscriptionId).length;
+      const oneTimeCount = visible.length - recurringCount;
+      const byCat: Record<string, number> = {};
+      visible.forEach((r) => {
+        const c = r.donorCategory || "general";
+        byCat[c] = (byCat[c] || 0) + (Number(r.amountInr) || 0);
+      });
+      $("sumTotal").textContent = fmtINR(total);
+      $("sumCount").textContent = String(visible.length);
+      $("sumType").textContent = `${oneTimeCount} / ${recurringCount}`;
+      $("sumCategory").innerHTML = ["general", "zakat", "sadqa", "interest"]
+        .filter((c) => byCat[c])
+        .map((c) => `<div><span class="text-brand-ink/55">${CATEGORY_LABEL[c]}:</span> <strong>${fmtINR(byCat[c])}</strong></div>`)
+        .join("") || '<div class="text-brand-ink/45">—</div>';
+      $("summary").classList.remove("hidden");
+    }
+
+    function renderTable(visible: Row[]) {
+      if (allRows.length === 0) {
+        $("tbody").innerHTML = `<tr><td colspan="11" class="px-3 py-8 text-center text-brand-ink/55">No donations yet.</td></tr>`;
+      } else if (visible.length === 0) {
+        $("tbody").innerHTML = `<tr><td colspan="11" class="px-3 py-8 text-center text-brand-ink/55">No donations match these filters. <button type="button" id="clearFiltersInline" class="text-brand-red hover:underline font-semibold">Clear filters</button></td></tr>`;
+        $("clearFiltersInline").addEventListener("click", clearFilters);
+      } else {
+        $("tbody").innerHTML = visible.map((r) => `
           <tr class="hover:bg-brand-cream/40">
             <td class="px-3 py-2.5 whitespace-nowrap text-brand-ink/70">${fmtDate(r.donatedAt)}</td>
             <td class="px-3 py-2.5 font-mono text-xs">${escapeHtml(r.receiptNumber)}</td>
@@ -181,10 +282,106 @@ export const prerender = false;
             <td class="px-3 py-2.5 font-mono text-xs">${paymentCell(r)}</td>
             <td class="px-3 py-2.5 whitespace-nowrap"><a class="inline-flex items-center gap-1 text-brand-red hover:underline font-semibold text-xs" href="/api/admin/receipt?paymentId=${encodeURIComponent(r.paymentId)}">⬇ PDF</a></td>
           </tr>
-        `).join("") || `<tr><td colspan="11" class="px-3 py-8 text-center text-brand-ink/55">No donations yet.</td></tr>`;
+        `).join("");
+      }
+      $("tableWrap").classList.remove("hidden");
+    }
+
+    function updateExportButton(visible: Row[]) {
+      $("exportCsvBtn").textContent = `⬇ Export CSV (${visible.length})`;
+    }
+
+    function renderFiltered() {
+      const visible = applyFilters(allRows, filters);
+      renderTotals(visible);
+      renderSummary(visible);
+      renderTable(visible);
+      updateExportButton(visible);
+    }
+
+    function clearFilters() {
+      filters = { method: "", category: "", type: "", dateFrom: "", dateTo: "", q: "" };
+      (document.getElementById("filterMethod") as HTMLSelectElement).value = "";
+      (document.getElementById("filterCategory") as HTMLSelectElement).value = "";
+      (document.getElementById("filterType") as HTMLSelectElement).value = "";
+      (document.getElementById("filterDateFrom") as HTMLInputElement).value = "";
+      (document.getElementById("filterDateTo") as HTMLInputElement).value = "";
+      (document.getElementById("filterSearch") as HTMLInputElement).value = "";
+      renderFiltered();
+    }
+
+    // ---- CSV export ----
+    function csvEscape(v: unknown): string {
+      const s = v === null || v === undefined ? "" : String(v);
+      return `"${s.replace(/"/g, '""')}"`;
+    }
+    // Bank UTRs / phone numbers are long pure-digit strings — Excel silently mangles
+    // 16+ digit numeric-looking cells into truncated scientific notation on open.
+    // A leading apostrophe is the standard CSV force-text convention (invisible in Excel's cell display).
+    function forceText(v: string): string {
+      return v ? `'${v}` : v;
+    }
+    function todayStr(): string {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    }
+    function rowsToCsv(rows: Row[]): string {
+      const headers = [
+        "Receipt Number", "Date (IST)", "Amount (INR)", "Type", "Frequency",
+        "Payment Method", "Payment Reference", "Payment ID", "Order ID",
+        "Donor Name", "Donor Email", "Donor Phone", "Donor PAN", "Donor Address", "Category",
+      ];
+      const lines = [headers.map(csvEscape).join(",")];
+      for (const r of rows) {
+        const method = r.paymentMethod || "online";
+        lines.push([
+          r.receiptNumber,
+          fmtDate(r.donatedAt),
+          Number(r.amountInr) || 0,
+          r.subscriptionId ? "Recurring" : "One-time",
+          r.frequency ? cap(r.frequency) : "",
+          METHOD_LABEL[method] || cap(method),
+          forceText(r.paymentReference || ""),
+          r.paymentId,
+          r.orderId,
+          r.donorName || "",
+          r.donorEmail || "",
+          forceText(r.donorPhone || ""),
+          r.donorPan || "",
+          r.donorAddress || "",
+          CATEGORY_LABEL[r.donorCategory || "general"] || "General",
+        ].map(csvEscape).join(","));
+      }
+      // Leading BOM so Windows Excel reads non-ASCII (₹, names) as UTF-8 instead of mangling it.
+      return "﻿" + lines.join("\r\n");
+    }
+    function downloadCsv(rows: Row[]) {
+      const blob = new Blob([rowsToCsv(rows)], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `abf-donations_${todayStr()}${filtersActive() ? "_filtered" : ""}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    async function fetchData() {
+      $("loading").classList.remove("hidden");
+      $("filterBar").classList.add("hidden");
+      $("tableWrap").classList.add("hidden");
+      $("error").classList.add("hidden");
+      try {
+        const res = await fetch("/api/admin/donations", { cache: "no-store" });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || "Failed to load");
+        allRows = (data.donations || []) as Row[];
+        allRows.sort((a, b) => b.donatedAt.localeCompare(a.donatedAt));
 
         $("loading").classList.add("hidden");
-        $("tableWrap").classList.remove("hidden");
+        $("filterBar").classList.remove("hidden");
+        renderFiltered();
       } catch (err) {
         $("loading").classList.add("hidden");
         const msg = err instanceof Error ? err.message : "Failed to load";
@@ -194,7 +391,31 @@ export const prerender = false;
       }
     }
 
-    $("refreshBtn").addEventListener("click", load);
-    load();
+    // ---- Filter control wiring ----
+    const filterMethod = document.getElementById("filterMethod") as HTMLSelectElement;
+    const filterCategory = document.getElementById("filterCategory") as HTMLSelectElement;
+    const filterType = document.getElementById("filterType") as HTMLSelectElement;
+    const filterDateFrom = document.getElementById("filterDateFrom") as HTMLInputElement;
+    const filterDateTo = document.getElementById("filterDateTo") as HTMLInputElement;
+    const filterSearch = document.getElementById("filterSearch") as HTMLInputElement;
+
+    filterMethod.addEventListener("change", () => { filters.method = filterMethod.value; renderFiltered(); });
+    filterCategory.addEventListener("change", () => { filters.category = filterCategory.value; renderFiltered(); });
+    filterType.addEventListener("change", () => { filters.type = filterType.value; renderFiltered(); });
+    filterDateFrom.addEventListener("change", () => { filters.dateFrom = filterDateFrom.value; renderFiltered(); });
+    filterDateTo.addEventListener("change", () => { filters.dateTo = filterDateTo.value; renderFiltered(); });
+
+    let searchDebounce: ReturnType<typeof setTimeout> | undefined;
+    filterSearch.addEventListener("input", () => {
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(() => { filters.q = filterSearch.value; renderFiltered(); }, 180);
+    });
+
+    $("clearFiltersBtn").addEventListener("click", clearFilters);
+    $("exportCsvBtn").addEventListener("click", () => downloadCsv(applyFilters(allRows, filters)));
+
+    // Refresh re-fetches but preserves whatever filters are currently active.
+    $("refreshBtn").addEventListener("click", fetchData);
+    fetchData();
   </script>
 </BaseLayout>
