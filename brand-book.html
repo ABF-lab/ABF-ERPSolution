@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brand Book — Active Bengaluru Foundation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --yellow:      #FFE066;
+      --yellow-deep: #F5B800;
+      --red:         #EF4136;
+      --red-deep:    #C8261B;
+      --ink:         #1A1A1A;
+      --ink-60:      rgba(26,26,26,0.60);
+      --ink-30:      rgba(26,26,26,0.30);
+      --cream:       #FFF8E7;
+      --paper:       #FFFDF5;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--paper); color: var(--ink); font-family: 'Plus Jakarta Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; line-height: 1.6; }
+    h1,h2,h3,h4,h5 { font-family: 'Archivo Black', Impact, system-ui, sans-serif; letter-spacing: -0.02em; line-height: 1.1; }
+    .page { max-width: 1100px; margin: 0 auto; padding: 0 32px; }
+    section { padding: 80px 0; }
+    section + section { border-top: 1px solid rgba(26,26,26,0.08); }
+    .cover { background: var(--yellow); min-height: 100vh; display: flex; flex-direction: column; }
+    .cover-inner { max-width: 1100px; margin: 0 auto; padding: 80px 32px 60px; flex: 1; display: flex; flex-direction: column; justify-content: center; }
+    .cover-tag { display: inline-flex; align-items: center; gap: 6px; background: var(--red); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 6px 14px; border-radius: 999px; width: fit-content; margin-bottom: 32px; }
+    .cover h1 { font-size: clamp(3rem, 8vw, 7rem); line-height: 1.0; max-width: 14ch; }
+    .cover h1 span { color: var(--red); }
+    .cover-sub { font-size: 1.2rem; font-weight: 500; color: var(--ink-60); margin-top: 24px; max-width: 48ch; }
+    .cover-meta { background: var(--ink); color: #fff; padding: 20px 32px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; flex-wrap: wrap; gap: 8px; }
+    .toc { background: var(--ink); color: #fff; padding: 80px 0; }
+    .toc h2 { color: var(--yellow); margin-bottom: 40px; font-size: 2.5rem; }
+    .toc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+    .toc-item { border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 20px; }
+    .toc-num { font-size: 12px; color: var(--yellow); font-weight: 700; letter-spacing: 0.08em; margin-bottom: 6px; }
+    .toc-title { font-size: 15px; font-weight: 600; }
+    .section-label { display: inline-flex; align-items: center; background: var(--red); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 5px 12px; border-radius: 999px; margin-bottom: 16px; }
+    .section-title { font-size: clamp(2rem, 4vw, 3.5rem); margin-bottom: 12px; }
+    .section-desc { font-size: 1.05rem; color: var(--ink-60); max-width: 60ch; line-height: 1.7; margin-bottom: 48px; }
+    .palette-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px; }
+    .swatch { border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.10); }
+    .swatch-color { height: 100px; }
+    .swatch-info { padding: 14px 16px; background: white; }
+    .swatch-name { font-weight: 700; font-size: 13px; margin-bottom: 2px; }
+    .swatch-hex { font-family: monospace; font-size: 12px; color: var(--ink-60); }
+    .swatch-use { font-size: 11px; color: var(--ink-60); margin-top: 4px; }
+    .type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+    .type-block { background: white; border-radius: 24px; padding: 40px; box-shadow: 0 8px 30px rgba(0,0,0,0.07); }
+    .type-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--red); margin-bottom: 16px; }
+    .type-specimen-display { font-family: 'Archivo Black', Impact, sans-serif; font-size: 3rem; line-height: 1.05; color: var(--ink); margin-bottom: 20px; }
+    .type-specimen-body { font-size: 1.05rem; line-height: 1.75; color: var(--ink-60); margin-bottom: 24px; }
+    .weight-row { display: flex; justify-content: space-between; font-size: 14px; padding: 8px 0; border-bottom: 1px solid rgba(26,26,26,0.06); }
+    .weight-name { color: var(--ink-60); }
+    .logo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .logo-box { border-radius: 20px; padding: 48px 32px; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+    .logo-box.light { background: var(--paper); border: 1px solid rgba(26,26,26,0.10); }
+    .logo-box.dark { background: var(--ink); }
+    .logo-box.yellow { background: var(--yellow); }
+    .logo-mark { font-family: 'Archivo Black', sans-serif; text-align: center; }
+    .logo-mark .abbr { font-size: 3.5rem; display: block; line-height: 1; }
+    .logo-mark .full { font-size: 0.85rem; letter-spacing: 0.02em; display: block; margin-top: 4px; }
+    .logo-mark .tag { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.7rem; font-style: italic; font-weight: 500; display: block; margin-top: 4px; }
+    .logo-box-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+    .rule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 40px; }
+    .rule-card { border-radius: 16px; padding: 24px; }
+    .rule-card.do { background: #F0FAF4; border: 1px solid #A8E6BE; }
+    .rule-card.dont { background: #FFF0F0; border: 1px solid #FFBDB8; }
+    .rule-tag { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
+    .rule-tag.green { color: #1A7A3F; }
+    .rule-tag.red { color: #C8261B; }
+    .rule-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .rule-list li { font-size: 14px; padding-left: 20px; position: relative; }
+    .rule-list li::before { position: absolute; left: 0; }
+    .do .rule-list li::before { content: "✓"; color: #1A7A3F; font-weight: 700; }
+    .dont .rule-list li::before { content: "✗"; color: #C8261B; font-weight: 700; }
+    .voice-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .voice-card { background: white; border-radius: 20px; padding: 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.07); }
+    .voice-icon { font-size: 2rem; margin-bottom: 12px; }
+    .voice-title { font-size: 1.1rem; margin-bottom: 8px; font-family: 'Archivo Black', sans-serif; }
+    .voice-desc { font-size: 13px; color: var(--ink-60); line-height: 1.6; margin-bottom: 14px; }
+    .voice-ex { font-size: 12px; line-height: 1.6; }
+    .voice-ex strong { color: var(--red); }
+    .comp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+    .comp-block { background: white; border-radius: 24px; padding: 32px; box-shadow: 0 4px 20px rgba(0,0,0,0.07); }
+    .comp-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--red); margin-bottom: 20px; }
+    .btn-demo { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+    .btn { display: inline-flex; align-items: center; padding: 11px 22px; border-radius: 999px; font-weight: 700; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; border: none; cursor: default; }
+    .btn-primary { background: var(--ink); color: white; }
+    .btn-red { background: var(--red); color: white; }
+    .btn-yellow { background: var(--yellow); color: var(--ink); }
+    .btn-outline { background: white; color: var(--ink); box-shadow: inset 0 0 0 1.5px rgba(26,26,26,0.20); }
+    .chip-demo { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+    .chip { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .chip-ink { background: rgba(26,26,26,0.07); color: var(--ink); }
+    .chip-red { background: rgba(239,65,54,0.12); color: var(--red); }
+    .chip-yellow { background: var(--yellow); color: var(--ink); }
+    .values-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 20px; }
+    .value-card { border-radius: 20px; padding: 32px; display: flex; flex-direction: column; gap: 12px; }
+    .value-card:nth-child(1) { background: var(--ink); color: white; }
+    .value-card:nth-child(2) { background: var(--yellow); color: var(--ink); }
+    .value-card:nth-child(3) { background: var(--cream); color: var(--ink); border: 1px solid rgba(26,26,26,0.08); }
+    .value-card:nth-child(4) { background: var(--red); color: white; }
+    .value-num { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; opacity: 0.5; }
+    .value-name { font-family: 'Archivo Black', sans-serif; font-size: 1.6rem; }
+    .value-desc { font-size: 14px; line-height: 1.65; opacity: 0.80; }
+    .brand-footer { background: var(--ink); color: white; padding: 60px 0; text-align: center; }
+    .brand-footer h2 { font-size: 2.5rem; color: var(--yellow); margin-bottom: 12px; }
+    .brand-footer p { color: rgba(255,255,255,0.55); font-size: 14px; margin-top: 8px; }
+    .footer-divider { width: 60px; height: 4px; background: var(--red); border-radius: 999px; margin: 24px auto; }
+    @media (max-width: 768px) {
+      .type-grid, .logo-grid, .voice-grid, .comp-grid, .values-grid, .rule-grid { grid-template-columns: 1fr; }
+      .cover-meta { flex-direction: column; gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-inner">
+    <div class="cover-tag">✦ Official Brand Guidelines</div>
+    <h1>Active<br/>Bengaluru<br/><span>Foundation.</span></h1>
+    <p class="cover-sub">This document defines how ABF presents itself to the world — our identity, voice, colours, typography, and values. Every communication, design, and interaction should feel like it could only come from us.</p>
+  </div>
+  <div class="cover-meta">
+    <span>Active Bengaluru Foundation — Brand Book</span>
+    <span>Version 1.0 · 2025</span>
+    <span>CIN: U85500KA2024NPL184982</span>
+  </div>
+</div>
+
+<!-- TOC -->
+<div class="toc">
+  <div class="page">
+    <h2>Contents</h2>
+    <div class="toc-grid">
+      <div class="toc-item"><div class="toc-num">01</div><div class="toc-title">Brand Story & Origin</div></div>
+      <div class="toc-item"><div class="toc-num">02</div><div class="toc-title">Mission, Vision & Values</div></div>
+      <div class="toc-item"><div class="toc-num">03</div><div class="toc-title">Logo & Identity</div></div>
+      <div class="toc-item"><div class="toc-num">04</div><div class="toc-title">Colour Palette</div></div>
+      <div class="toc-item"><div class="toc-num">05</div><div class="toc-title">Typography</div></div>
+      <div class="toc-item"><div class="toc-num">06</div><div class="toc-title">Voice & Tone</div></div>
+      <div class="toc-item"><div class="toc-num">07</div><div class="toc-title">UI Components</div></div>
+      <div class="toc-item"><div class="toc-num">08</div><div class="toc-title">Photography Style</div></div>
+      <div class="toc-item"><div class="toc-num">09</div><div class="toc-title">Spacing & Layout</div></div>
+      <div class="toc-item"><div class="toc-num">10</div><div class="toc-title">Do's & Don'ts</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 01 BRAND STORY -->
+<section style="background:var(--cream);">
+  <div class="page">
+    <div class="section-label">01 · Brand Story</div>
+    <h2 class="section-title">We didn't start as an NGO.<br/><span style="color:var(--red)">We started as neighbours.</span></h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;">
+      <div>
+        <p style="font-size:1.05rem;line-height:1.8;color:var(--ink-60);margin-bottom:20px;">Active Bengaluru Foundation was not born in a boardroom. It was born in the middle of a crisis — when a city was struggling to breathe, and a group of ordinary people decided they could not stand by.</p>
+        <p style="font-size:1.05rem;line-height:1.8;color:var(--ink-60);margin-bottom:20px;">During COVID-19, the ABF team ran community kitchens, drove patients to hospitals at 2 AM, tracked down oxygen cylinders, arranged ambulances, and coordinated burials under Mercy Mission and the Emergency Response Team (ERT).</p>
+        <p style="font-size:1.05rem;line-height:1.8;color:var(--ink-60);">In 2024, we formalised as a Section 8 NGO with 12A and 80G certifications — not because the paperwork mattered, but because the people we serve deserve an organisation that will still be here five years from now.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div style="background:var(--ink);color:white;border-radius:20px;padding:28px;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;color:var(--yellow);margin-bottom:8px;">THE MODEL</div>
+          <p style="font-family:'Archivo Black',sans-serif;font-size:1.3rem;line-height:1.3;">"Be the bridge. Don't duplicate."</p>
+          <p style="font-size:13px;color:rgba(255,255,255,0.6);margin-top:10px;">ABF is the connective tissue between civil society, government, and communities — making every partner stronger.</p>
+        </div>
+        <div style="background:var(--yellow);border-radius:20px;padding:28px;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;color:var(--red);margin-bottom:8px;">TAGLINE</div>
+          <p style="font-family:'Archivo Black',sans-serif;font-size:1.5rem;line-height:1.3;">A People's Movement. ✦</p>
+        </div>
+        <div style="background:white;border-radius:20px;padding:24px;border:1px solid rgba(26,26,26,0.08);">
+          <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;color:var(--ink-60);margin-bottom:10px;text-transform:uppercase;">Legal Identity</div>
+          <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--ink-60);">
+            <span>🏛️ Section 8 NGO (Non-Profit Company)</span>
+            <span>📋 CIN: U85500KA2024NPL184982</span>
+            <span>✅ 80G Tax-Exempt Donations</span>
+            <span>✅ 12A Registration</span>
+            <span>📍 Fraser Town, Bengaluru 560005</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 02 MISSION, VISION & VALUES -->
+<section>
+  <div class="page">
+    <div class="section-label">02 · Mission, Vision & Values</div>
+    <h2 class="section-title">What we stand for.</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:40px;">
+      <div style="background:var(--ink);color:white;border-radius:24px;padding:40px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;color:var(--yellow);margin-bottom:12px;">MISSION</div>
+        <p style="font-family:'Archivo Black',sans-serif;font-size:1.4rem;line-height:1.3;">To serve as the bridge between NGOs, government, and underprivileged communities — making every partner stronger.</p>
+      </div>
+      <div style="background:var(--red);color:white;border-radius:24px;padding:40px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;color:var(--yellow);margin-bottom:12px;">VISION</div>
+        <p style="font-family:'Archivo Black',sans-serif;font-size:1.4rem;line-height:1.3;">A Bengaluru where no citizen falls through the cracks — where the ecosystem of care is as active as the city itself.</p>
+      </div>
+    </div>
+    <div class="values-grid">
+      <div class="value-card"><div class="value-num">01</div><div class="value-name">Show Up.</div><div class="value-desc">Before we had a name or letterhead, we were already on the ground. Presence is the foundation of everything we do. When the moment calls, we move.</div></div>
+      <div class="value-card"><div class="value-num">02</div><div class="value-name">Be the Bridge.</div><div class="value-desc">We don't compete with the NGOs around us. We connect them. Collaboration over duplication. Strength through infrastructure, not rivalry.</div></div>
+      <div class="value-card"><div class="value-num">03</div><div class="value-name">Accountability First.</div><div class="value-desc">Goodwill alone isn't enough. Lasting change demands structure, documented impact, and full transparency. The community deserves to know where every rupee goes.</div></div>
+      <div class="value-card"><div class="value-num">04</div><div class="value-name">People Over Process.</div><div class="value-desc">We formalised the promise, not the passion. Rules serve the mission — never the other way around. At the end of every system is a human life we are trying to improve.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 03 LOGO & IDENTITY -->
+<section style="background:var(--cream);">
+  <div class="page">
+    <div class="section-label">03 · Logo & Identity</div>
+    <h2 class="section-title">The mark of ABF.</h2>
+    <p class="section-desc">The ABF wordmark uses Archivo Black — bold, unapologetic, built for impact. The abbreviation "ABF" acts as a primary mark; the full name as secondary lockup.</p>
+    <div class="logo-grid">
+      <div class="logo-box light">
+        <div class="logo-mark" style="color:var(--ink);"><span class="abbr">ABF</span><span class="full">ACTIVE BENGALURU FOUNDATION</span><span class="tag" style="color:var(--red);">A People's Movement ✦</span></div>
+        <div class="logo-box-label" style="color:var(--ink-60);">Primary — Light Background</div>
+      </div>
+      <div class="logo-box dark">
+        <div class="logo-mark" style="color:white;"><span class="abbr">ABF</span><span class="full" style="color:rgba(255,255,255,0.6);">ACTIVE BENGALURU FOUNDATION</span><span class="tag" style="color:var(--yellow);">A People's Movement ✦</span></div>
+        <div class="logo-box-label" style="color:rgba(255,255,255,0.4);">Reversed — Dark Background</div>
+      </div>
+      <div class="logo-box yellow">
+        <div class="logo-mark" style="color:var(--ink);"><span class="abbr">ABF</span><span class="full">ACTIVE BENGALURU FOUNDATION</span><span class="tag" style="color:var(--red);">A People's Movement ✦</span></div>
+        <div class="logo-box-label" style="color:var(--ink-60);">On Brand Yellow</div>
+      </div>
+    </div>
+    <div class="rule-grid">
+      <div class="rule-card do"><div class="rule-tag green">✦ Do</div><ul class="rule-list"><li>Use logo on approved backgrounds only (white, cream, yellow, dark ink)</li><li>Maintain clear space equal to the height of the "A" around the logo</li><li>Use the full lockup on formal documents and reports</li><li>Use "ABF" as shorthand in digital UI where space is limited</li><li>Always use the red sparkle ✦ with the tagline</li></ul></div>
+      <div class="rule-card dont"><div class="rule-tag red">✗ Don't</div><ul class="rule-list"><li>Stretch, skew, or rotate the wordmark</li><li>Place logo on busy photographic backgrounds</li><li>Change the font — only Archivo Black is approved</li><li>Use the logo smaller than 80px wide in digital</li><li>Recolour the logo to unapproved colours</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- 04 COLOUR PALETTE -->
+<section>
+  <div class="page">
+    <div class="section-label">04 · Colour Palette</div>
+    <h2 class="section-title">Colours that <span style="color:var(--red)">carry weight.</span></h2>
+    <p class="section-desc">Our palette is warm, bold, and grounded. Yellow energises. Red activates. Ink anchors. Cream breathes. Never introduce colours outside this palette.</p>
+    <div class="palette-grid">
+      <div class="swatch"><div class="swatch-color" style="background:#FFE066;"></div><div class="swatch-info"><div class="swatch-name">Brand Yellow</div><div class="swatch-hex">#FFE066</div><div class="swatch-use">Hero backgrounds, highlights</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#FFE680;"></div><div class="swatch-info"><div class="swatch-name">Yellow Soft</div><div class="swatch-hex">#FFE680</div><div class="swatch-use">Hover states on yellow</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#F5B800;"></div><div class="swatch-info"><div class="swatch-name">Yellow Deep</div><div class="swatch-hex">#F5B800</div><div class="swatch-use">Borders, pressed yellow</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#EF4136;"></div><div class="swatch-info"><div class="swatch-name">Brand Red</div><div class="swatch-hex">#EF4136</div><div class="swatch-use">CTA buttons, links, chips</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#C8261B;"></div><div class="swatch-info"><div class="swatch-name">Red Deep</div><div class="swatch-hex">#C8261B</div><div class="swatch-use">Hover on red buttons</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#1A1A1A;"></div><div class="swatch-info"><div class="swatch-name">Brand Ink</div><div class="swatch-hex">#1A1A1A</div><div class="swatch-use">Primary text, dark BGs</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#FFF8E7;border:1px solid #e8e0cc;"></div><div class="swatch-info"><div class="swatch-name">Brand Cream</div><div class="swatch-hex">#FFF8E7</div><div class="swatch-use">Section backgrounds</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#FFFDF5;border:1px solid #e8e0cc;"></div><div class="swatch-info"><div class="swatch-name">Brand Paper</div><div class="swatch-hex">#FFFDF5</div><div class="swatch-use">Page body background</div></div></div>
+    </div>
+    <div style="margin-top:32px;background:var(--cream);border-left:4px solid var(--yellow-deep);padding:16px 20px;border-radius:0 12px 12px 0;font-size:14px;color:var(--ink-60);">
+      <strong>Accessibility:</strong> Brand Red (#EF4136) on white passes WCAG AA at 14px bold+. Brand Ink on Brand Yellow passes WCAG AAA. Always verify contrast ratios before combining colour pairs.
+    </div>
+  </div>
+</section>
+
+<!-- 05 TYPOGRAPHY -->
+<section style="background:var(--cream);">
+  <div class="page">
+    <div class="section-label">05 · Typography</div>
+    <h2 class="section-title">Two fonts. One voice.</h2>
+    <p class="section-desc">Exactly two typefaces — never more. Archivo Black commands attention. Plus Jakarta Sans earns trust.</p>
+    <div class="type-grid">
+      <div class="type-block">
+        <div class="type-label">Display — Archivo Black</div>
+        <div class="type-specimen-display">Action for Community.</div>
+        <p style="font-size:13px;color:var(--ink-60);margin-bottom:20px;">Used for all headings (H1–H4), hero text, pull quotes, and brand statements. Archivo Black is the only approved weight — never use a lighter variant.</p>
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;color:var(--ink-60);margin-bottom:10px;text-transform:uppercase;">Use for</div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--ink-60);">
+          <li>✦ Page headings H1, H2, H3, H4</li><li>✦ Hero section copy</li><li>✦ Pull quotes and impact statements</li><li>✦ Campaign and event titles</li>
+        </ul>
+      </div>
+      <div class="type-block">
+        <div class="type-label">Body — Plus Jakarta Sans</div>
+        <div class="type-specimen-body">Born from neighbours showing up. ABF is the connective tissue between civil society, government, and the communities we serve every day across Bengaluru.</div>
+        <div style="display:flex;flex-direction:column;gap:0;">
+          <div class="weight-row"><span style="font-weight:400;">Regular 400</span><span class="weight-name">Body copy, descriptions</span></div>
+          <div class="weight-row"><span style="font-weight:500;">Medium 500</span><span class="weight-name">Subheadings, labels</span></div>
+          <div class="weight-row"><span style="font-weight:600;">SemiBold 600</span><span class="weight-name">Chips, nav items</span></div>
+          <div class="weight-row"><span style="font-weight:700;">Bold 700</span><span class="weight-name">Emphasis, callouts</span></div>
+          <div class="weight-row" style="border-bottom:none;"><span style="font-weight:800;">ExtraBold 800</span><span class="weight-name">Buttons, CTAs</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 06 VOICE & TONE -->
+<section>
+  <div class="page">
+    <div class="section-label">06 · Voice & Tone</div>
+    <h2 class="section-title">How ABF <span style="color:var(--red)">speaks.</span></h2>
+    <p class="section-desc">ABF's voice is the voice of neighbours — grounded, honest, urgent when it needs to be, and always human. Our words carry the credibility we earned on the ground.</p>
+    <div class="voice-grid">
+      <div class="voice-card"><div class="voice-icon">🔥</div><div class="voice-title">Urgent, not alarmist</div><div class="voice-desc">We communicate need clearly. We don't sensationalise suffering to generate donations, but we don't shy away from gravity.</div><div class="voice-ex"><strong>✦ Write:</strong> "This family needs help now. Here's how."<br/><span style="color:var(--ink-60)">Not: "URGENT: Tragedy strikes!"</span></div></div>
+      <div class="voice-card"><div class="voice-icon">🤝</div><div class="voice-title">Direct but warm</div><div class="voice-desc">We speak person-to-person. No corporate-speak, no jargon. Talking to a neighbour, not a benefactor.</div><div class="voice-ex"><strong>✦ Write:</strong> "Your donation goes directly to those who need it."<br/><span style="color:var(--ink-60)">Not: "Contributions are allocated per programme guidelines."</span></div></div>
+      <div class="voice-card"><div class="voice-icon">💪</div><div class="voice-title">Action-oriented</div><div class="voice-desc">Every message ends with something the reader can do. We are a movement, not a memo.</div><div class="voice-ex"><strong>✦ Write:</strong> "Join us. Volunteer this weekend. Donate ₹500."<br/><span style="color:var(--ink-60)">Not: "Support for ABF initiatives is appreciated."</span></div></div>
+      <div class="voice-card"><div class="voice-icon">📊</div><div class="voice-title">Accountable</div><div class="voice-desc">We share numbers, outcomes, and challenges honestly. Accountability is a brand value, not just compliance.</div><div class="voice-ex"><strong>✦ Write:</strong> "₹12.4L raised. 847 patients supported."<br/><span style="color:var(--ink-60)">Not: "We've helped thousands of people."</span></div></div>
+      <div class="voice-card"><div class="voice-icon">🌏</div><div class="voice-title">Bengaluru-rooted</div><div class="voice-desc">We are from this city, for this city. Our language references local geography and community when relevant.</div><div class="voice-ex"><strong>✦ Write:</strong> "From Fraser Town to Shivajinagar — ABF is on the ground."<br/><span style="color:var(--ink-60)">Not vague: "We serve communities across India."</span></div></div>
+      <div class="voice-card"><div class="voice-icon">🙏</div><div class="voice-title">Dignified always</div><div class="voice-desc">Beneficiaries are people, not props. We never reduce a person to their suffering. Dignity is non-negotiable.</div><div class="voice-ex"><strong>✦ Write:</strong> "A father of two, recovering after surgery."<br/><span style="color:var(--ink-60)">Never: "Destitute man in critical condition."</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 07 UI COMPONENTS -->
+<section style="background:var(--cream);">
+  <div class="page">
+    <div class="section-label">07 · UI Components</div>
+    <h2 class="section-title">The building blocks.</h2>
+    <p class="section-desc">All digital touchpoints use these component patterns consistently. Rounded pill buttons, warm cream backgrounds, and the sparkle accent are signature ABF traits.</p>
+    <div class="comp-grid">
+      <div class="comp-block">
+        <div class="comp-label">Buttons</div>
+        <div class="btn-demo">
+          <button class="btn btn-primary">Donate →</button>
+          <button class="btn btn-red">📞 Call Now</button>
+          <button class="btn btn-yellow">Get Involved</button>
+          <button class="btn btn-outline">Learn More</button>
+        </div>
+        <p style="font-size:13px;color:var(--ink-60);line-height:1.6;">All buttons: <strong>border-radius: 9999px</strong>, font-weight 700, min height 44px. Hover: primary→red, red→deep red, yellow→yellow-deep.</p>
+      </div>
+      <div class="comp-block">
+        <div class="comp-label">Chips & Badges</div>
+        <div class="chip-demo">
+          <span class="chip chip-red">Admin</span>
+          <span class="chip chip-yellow">Projects</span>
+          <span class="chip chip-ink">Events</span>
+          <span class="chip chip-red">Relief Campaign</span>
+          <span class="chip chip-ink">A People's Movement ✦</span>
+        </div>
+        <p style="font-size:13px;color:var(--ink-60);line-height:1.6;">Always uppercase, 10–11px, font-weight 700, letter-spacing 0.08–0.12em. Used to label sections — never for navigation.</p>
+      </div>
+      <div class="comp-block">
+        <div class="comp-label">Sparkle Accent ✦</div>
+        <div style="font-size:3rem;color:var(--red);margin-bottom:16px;">✦</div>
+        <p style="font-size:13px;color:var(--ink-60);line-height:1.6;margin-bottom:16px;">The ✦ sparkle is ABF's signature mark. Appears after key headings, with the tagline, and as a divider. Always in <strong style="color:var(--red)">Brand Red #EF4136</strong>.</p>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <span style="font-family:'Archivo Black',sans-serif;font-size:1.1rem;">Long-term <span style="color:var(--red);">change. ✦</span></span>
+          <span style="font-size:13px;color:var(--ink-60);">A People's Movement <span style="color:var(--red);">✦</span></span>
+        </div>
+      </div>
+      <div class="comp-block">
+        <div class="comp-label">Border Radius System</div>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:8px;">
+          <div style="display:flex;align-items:center;gap:16px;"><div style="background:var(--yellow);border-radius:8px;height:32px;width:80px;flex-shrink:0;"></div><div style="font-size:13px;"><strong>8px</strong> — Inputs, small tags</div></div>
+          <div style="display:flex;align-items:center;gap:16px;"><div style="background:var(--yellow);border-radius:16px;height:32px;width:80px;flex-shrink:0;"></div><div style="font-size:13px;"><strong>16px</strong> — Small cards, list items</div></div>
+          <div style="display:flex;align-items:center;gap:16px;"><div style="background:var(--yellow);border-radius:24px;height:32px;width:80px;flex-shrink:0;"></div><div style="font-size:13px;"><strong>24px</strong> — Cards, modals, sections</div></div>
+          <div style="display:flex;align-items:center;gap:16px;"><div style="background:var(--yellow);border-radius:999px;height:32px;width:80px;flex-shrink:0;"></div><div style="font-size:13px;"><strong>9999px</strong> — Buttons, chips, pills</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 08 PHOTOGRAPHY -->
+<section>
+  <div class="page">
+    <div class="section-label">08 · Photography Style</div>
+    <h2 class="section-title">Real people. <span style="color:var(--red)">Real moments.</span></h2>
+    <p class="section-desc">ABF photography is documentary in nature — honest, warm, and always human-first. We never stage suffering. We capture community in action.</p>
+    <div class="rule-grid">
+      <div class="rule-card do"><div class="rule-tag green">✦ Photography Do's</div><ul class="rule-list"><li>Use candid, documentary-style photography</li><li>Show volunteers and beneficiaries as equals</li><li>Prefer warm, natural lighting (golden hour)</li><li>Show Bengaluru as context and backdrop</li><li>Always obtain written consent before publishing</li><li>Crop to square or 16:9 for digital consistency</li></ul></div>
+      <div class="rule-card dont"><div class="rule-tag red">✗ Photography Don'ts</div><ul class="rule-list"><li>Never use stock photography for impact stories</li><li>Never show children's faces without guardian consent</li><li>Avoid "poverty porn" — images that reduce dignity</li><li>No heavy filters or unnatural colour grading</li><li>Don't use images from non-ABF events without credit</li><li>Avoid overly polished, corporate-looking shots</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- 09 SPACING -->
+<section style="background:var(--cream);">
+  <div class="page">
+    <div class="section-label">09 · Spacing & Layout</div>
+    <h2 class="section-title">Space breathes.</h2>
+    <p class="section-desc">Consistent spacing gives the brand a calm, confident presence. We use an 8px base grid throughout all digital applications.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;">
+      <div>
+        <h3 style="font-size:1rem;margin-bottom:20px;font-family:'Archivo Black',sans-serif;">Spacing Scale (8px grid)</h3>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;align-items:center;gap:16px;"><div style="background:var(--yellow);border-radius:4px;height:20px;width:4px;flex-shrink:0;"></div><div style="font-size:13px;"><strong>4px</strong> — Micro gaps (icon-to-text)</div></div>
+          <div style="display:flex;align-items:center;gap:16px;"><div style="background:var(--yellow);border-radius:4px;height:20px;width:8px;flex-shrink:0;"></div><div style="font-size:13px;"><strong>8px</strong> — Tight internal padding</div></div>
+          <div style="display:flex;align-items:center;gap:16px;"><div style="background:var(--yellow);border-radius:4px;height:20px;width:16px;flex-shrink:0;"></div><div style="font-size:13px;"><strong>16px</strong> — Card internal gaps</div></div>
+          <div style="display:flex;align-items:center;gap:16px;"><div style="background:var(--yellow);border-radius:4px;height:20px;width:24px;flex-shrink:0;"></div><div style="font-size:13px;"><strong>24px</strong> — Card padding, grid gap</div></div>
+          <div style="display:flex;align-items:center;gap:16px;"><div style="background:var(--yellow);border-radius:4px;height:20px;width:40px;flex-shrink:0;"></div><div style="font-size:13px;"><strong>40px</strong> — Between major blocks</div></div>
+          <div style="display:flex;align-items:center;gap:16px;"><div style="background:var(--yellow);border-radius:4px;height:20px;width:80px;flex-shrink:0;"></div><div style="font-size:13px;"><strong>80px</strong> — Section vertical padding</div></div>
+        </div>
+      </div>
+      <div>
+        <h3 style="font-size:1rem;margin-bottom:20px;font-family:'Archivo Black',sans-serif;">Layout Grid</h3>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="background:white;border-radius:16px;padding:18px;border:1px solid rgba(26,26,26,0.08);"><div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--red);margin-bottom:4px;">Max Width</div><div style="font-size:13px;">Content: <strong>1152px</strong> · Prose: <strong>768px</strong></div></div>
+          <div style="background:white;border-radius:16px;padding:18px;border:1px solid rgba(26,26,26,0.08);"><div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--red);margin-bottom:4px;">Page Gutter</div><div style="font-size:13px;">Mobile: <strong>20px</strong> · Desktop: <strong>32px</strong></div></div>
+          <div style="background:white;border-radius:16px;padding:18px;border:1px solid rgba(26,26,26,0.08);"><div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--red);margin-bottom:4px;">Section Padding</div><div style="font-size:13px;">Mobile: <strong>64px</strong> · Desktop: <strong>80–96px</strong></div></div>
+          <div style="background:white;border-radius:16px;padding:18px;border:1px solid rgba(26,26,26,0.08);"><div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--red);margin-bottom:4px;">Breakpoints</div><div style="font-size:13px;">sm <strong>640px</strong> · md <strong>768px</strong> · lg <strong>1024px</strong></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 10 DOS AND DONTS -->
+<section>
+  <div class="page">
+    <div class="section-label">10 · Do's & Don'ts</div>
+    <h2 class="section-title">The rules we <span style="color:var(--red)">live by.</span></h2>
+    <p class="section-desc">These guidelines protect the identity we've built through years of trust. When in doubt, come back to this page.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="rule-card do"><div class="rule-tag green">✦ Brand Identity Do's</div><ul class="rule-list"><li>Always use Archivo Black for headings</li><li>Always use the approved 8-colour palette only</li><li>Keep logo clear space equal to the "A" height</li><li>Use ✦ sparingly — only in Brand Red</li><li>Use pill-shaped buttons (border-radius: 9999px)</li><li>Use 24px border radius on all cards</li><li>Minimum section padding 64px vertical</li></ul></div>
+        <div class="rule-card do"><div class="rule-tag green">✦ Communication Do's</div><ul class="rule-list"><li>Write in first person plural ("we", "our")</li><li>Share specific numbers and outcomes</li><li>End every message with a clear action</li><li>Name the city and community you're serving</li><li>Show gratitude genuinely, not corporately</li><li>Disclose exactly how donations are used</li></ul></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="rule-card dont"><div class="rule-tag red">✗ Brand Identity Don'ts</div><ul class="rule-list"><li>Don't use any font other than Archivo Black + Plus Jakarta Sans</li><li>Don't use colours outside the approved palette</li><li>Don't rotate, skew, or distort the logo</li><li>Don't place logo on busy photographic backgrounds</li><li>Don't use square or sharp-cornered buttons</li><li>Don't create new brand colours without approval</li></ul></div>
+        <div class="rule-card dont"><div class="rule-tag red">✗ Communication Don'ts</div><ul class="rule-list"><li>Don't use NGO jargon ("stakeholders", "beneficiaries")</li><li>Don't make vague impact claims ("helped thousands")</li><li>Don't exploit suffering in headlines or imagery</li><li>Don't sound corporate or transactional</li><li>Don't over-promise outcomes you can't verify</li><li>Don't post without consent from people pictured</li></ul></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<div class="brand-footer">
+  <div class="page">
+    <h2>Active Bengaluru Foundation</h2>
+    <div class="footer-divider"></div>
+    <p>A People's Movement ✦</p>
+    <p>No 12, 1st Floor, Lazar Road, Fraser Town, Bangalore 560005, Karnataka</p>
+    <p>CIN: U85500KA2024NPL184982 · 80G · 12A · Section 8 NGO</p>
+    <p style="margin-top:24px;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;">Brand Book v1.0 · 2025 · All rights reserved</p>
+  </div>
+</div>
+
+</body>
+</html>

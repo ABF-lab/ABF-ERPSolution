@@ -1,0 +1,225 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+export const prerender = false;
+---
+
+<BaseLayout title="Create Medical Case · Admin — ABF" description="Record a new citizen medical request case" hideImpactStrip={true}>
+  <section class="container-x py-10 sm:py-14 max-w-2xl">
+    <div class="mb-6">
+      <span class="chip-red">Admin</span>
+      <h1 class="font-display text-3xl sm:text-4xl mt-3">Record New Case</h1>
+      <p class="mt-1 text-sm text-brand-ink/60">
+        Add citizen-reported medical issues, complaints, or assistance requests.
+      </p>
+      <a href="/admin/cases" class="inline-block mt-3 text-sm text-brand-red hover:underline font-semibold">← Back to cases</a>
+    </div>
+
+    <form id="caseForm" class="rounded-3xl bg-white shadow-card ring-1 ring-brand-ink/10 p-5 sm:p-8 space-y-6">
+      <!-- Patient Basic Info -->
+      <div class="space-y-4">
+        <h3 class="font-display text-lg border-b pb-2">Patient Details</h3>
+        <div>
+          <label class="block text-sm font-semibold text-brand-ink mb-1.5">Patient Name <span class="text-brand-red">*</span></label>
+          <input id="patientName" type="text" required class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none" placeholder="As per official documents" />
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-brand-ink mb-1.5">Age</label>
+            <input id="patientAge" type="number" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none" placeholder="Age in years" />
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-brand-ink mb-1.5">Gender</label>
+            <select id="patientGender" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none bg-white">
+              <option value="">Select Gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-brand-ink mb-1.5">BPL Status</label>
+            <select id="bplStatus" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none bg-white">
+              <option value="Active">Active</option>
+              <option value="Aadhar">Aadhar</option>
+              <option value="BPL">BPL</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-brand-ink mb-1.5">Entitlements</label>
+            <input id="entitlements" type="text" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none" placeholder="Aadhar / BPL Card details" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-brand-ink mb-1.5">Patient Mobile</label>
+          <input id="patientMobile" type="tel" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none" placeholder="+91 …" />
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <div class="col-span-2">
+            <label class="block text-sm font-semibold text-brand-ink mb-1.5">City</label>
+            <input id="patientCity" type="text" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none" placeholder="Bengaluru" />
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-brand-ink mb-1.5">State</label>
+            <input id="patientState" type="text" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none" placeholder="Karnataka" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-brand-ink mb-1.5">Address</label>
+          <textarea id="patientAddress" rows="2" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none" placeholder="Full residential address"></textarea>
+        </div>
+      </div>
+
+      <!-- Attender / Point of Contact Details -->
+      <div class="space-y-4 pt-4 border-t">
+        <h3 class="font-display text-lg border-b pb-2">Attender / Contact Person</h3>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-brand-ink mb-1.5">Attender Name</label>
+            <input id="attenderName" type="text" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none" placeholder="Name of primary contact" />
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-brand-ink mb-1.5">Attender Relation</label>
+            <input id="attenderRelation" type="text" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none" placeholder="Brother, Wife, Self, etc." />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-brand-ink mb-1.5">Attender Mobile</label>
+          <input id="attenderMobile" type="tel" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none" placeholder="Primary phone number" />
+        </div>
+      </div>
+
+      <!-- Medical Case Details -->
+      <div class="space-y-4 pt-4 border-t">
+        <h3 class="font-display text-lg border-b pb-2">Case Specifics</h3>
+        <div>
+          <label class="block text-sm font-semibold text-brand-ink mb-1.5">Chief Complaint <span class="text-brand-red">*</span></label>
+          <input id="chiefComplaint" type="text" required class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none" placeholder="Oncology, Cardiology, Pediatric, Pulmonology, etc." />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-brand-ink mb-1.5">History / Background</label>
+          <textarea id="history" rows="3" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none" placeholder="Past diagnosis, hospital visits, or context..."></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-brand-ink mb-1.5">Case Details / Status Notes</label>
+          <textarea id="caseDetails" rows="3" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none" placeholder="What is the current situation?"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-brand-ink mb-1.5">Suggestions / Action Taken</label>
+          <textarea id="suggestions" rows="2" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none" placeholder="What has ABF suggested/arranged?"></textarea>
+        </div>
+      </div>
+
+      <!-- Referrals and Costs -->
+      <div class="space-y-4 pt-4 border-t">
+        <h3 class="font-display text-lg border-b pb-2">Referrals & Estimates</h3>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-brand-ink mb-1.5">Referred To</label>
+            <input id="referred" type="text" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none" placeholder="e.g. Government Hospital, Kidwai" />
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-brand-ink mb-1.5">Case Type</label>
+            <select id="caseType" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none bg-white">
+              <option value="OPD">OPD</option>
+              <option value="Primary">Primary</option>
+              <option value="Secondary">Secondary</option>
+              <option value="Tertiary">Tertiary</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-brand-ink mb-1.5">Referral Person Name</label>
+            <input id="referralName" type="text" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none" placeholder="Coordinator/Doctor Name" />
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-brand-ink mb-1.5">Referral Contact</label>
+            <input id="referralNumber" type="text" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none" placeholder="Phone Number" />
+          </div>
+        </div>
+        <div class="grid sm:grid-cols-3 gap-4">
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-semibold text-brand-ink mb-1.5">Estimated Cost Range</label>
+            <select id="estimatedCost" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none bg-white">
+              <option value="Below 10K">Below 10K</option>
+              <option value="10k - 25k">10k - 25k</option>
+              <option value="25k -50k">25k - 50k</option>
+              <option value="50k - 1 lac">50k - 1 lac</option>
+              <option value="1lac - 3 lac">1lac - 3 lac</option>
+              <option value="3 lac - 8 lac">3 lac - 8 lac</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-brand-ink mb-1.5">Actual Saved (₹)</label>
+            <input id="actualSaved" type="number" class="w-full px-4 py-2.5 rounded-xl ring-1 ring-brand-ink/15 focus:ring-2 focus:ring-brand-red focus:outline-none" placeholder="₹" />
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-4 flex items-center justify-between gap-4">
+        <p class="text-xs text-brand-ink/50"><span class="text-brand-red">*</span> Required fields</p>
+        <button type="submit" id="submitBtn" class="btn-primary bg-brand-red hover:bg-brand-red-deep">
+          Save Medical Case
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <script>
+    const $ = (id: string) => document.getElementById(id) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+
+    document.getElementById("caseForm")!.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      
+      const submitBtn = document.getElementById("submitBtn") as HTMLButtonElement;
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Saving...";
+
+      const payload = {
+        patientName: $("patientName").value,
+        age: $("patientAge").value ? Number($("patientAge").value) : null,
+        gender: $("patientGender").value,
+        bplStatus: $("bplStatus").value,
+        entitlements: $("entitlements").value,
+        patientMobile: $("patientMobile").value,
+        city: $("patientCity").value,
+        state: $("patientState").value,
+        address: $("patientAddress").value,
+        attenderName: $("attenderName").value,
+        attenderRelation: $("attenderRelation").value,
+        attenderMobile: $("attenderMobile").value,
+        chiefComplaint: $("chiefComplaint").value,
+        history: $("history").value,
+        caseDetails: $("caseDetails").value,
+        suggestions: $("suggestions").value,
+        referred: $("referred").value,
+        caseType: $("caseType").value,
+        referralName: $("referralName").value,
+        referralNumber: $("referralNumber").value,
+        estimatedCost: $("estimatedCost").value,
+        actualSaved: $("actualSaved").value ? Number($("actualSaved").value) : null
+      };
+
+      try {
+        const res = await fetch("/api/admin/create-case", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        
+        if (!res.ok || !data.ok) throw new Error(data.error || "Failed to create case.");
+
+        alert(`Case created successfully! Case Number: ${data.caseNumber}`);
+        window.location.href = "/admin/cases";
+      } catch (err) {
+        alert(err instanceof Error ? err.message : "Error creating case.");
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Save Medical Case";
+      }
+    });
+  </script>
+</BaseLayout>

@@ -1,0 +1,381 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+export const prerender = false;
+---
+
+<BaseLayout title="Medical Cases · Admin — ABF" description="Citizen medical requests, status tracker, referrals, and follow-ups" hideImpactStrip={true}>
+  <section class="container-x py-10 sm:py-14">
+    <div class="flex flex-wrap items-end justify-between gap-3 mb-6">
+      <div>
+        <span class="chip-red">Admin</span>
+        <h1 class="font-display text-3xl sm:text-4xl mt-3">Medical Cases</h1>
+        <p class="mt-1 text-sm text-brand-ink/60">Live from Vercel Postgres</p>
+      </div>
+      <div class="flex items-center gap-3 flex-wrap">
+        <span id="caseTotals" class="text-sm font-semibold text-brand-ink/70">Loading…</span>
+        <a href="/admin/create-case" class="btn-primary text-sm">＋ Add new case</a>
+        <button id="refreshCasesBtn" class="btn-secondary text-sm">Refresh</button>
+      </div>
+    </div>
+
+    <!-- Summary cards -->
+    <div id="summaryCards" class="hidden mb-6 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div class="rounded-2xl bg-brand-ink text-white p-4 sm:p-5">
+        <div class="text-[10px] uppercase tracking-wider text-white/55 font-semibold">Total Cases</div>
+        <div id="sumTotal" class="font-display text-2xl sm:text-3xl mt-1">—</div>
+      </div>
+      <div class="rounded-2xl bg-brand-yellow text-brand-ink p-4 sm:p-5">
+        <div class="text-[10px] uppercase tracking-wider text-brand-ink/55 font-semibold">Completed Cases</div>
+        <div id="sumCompleted" class="font-display text-2xl sm:text-3xl mt-1">—</div>
+      </div>
+      <div class="rounded-2xl bg-white ring-1 ring-brand-ink/10 p-4 sm:p-5">
+        <div class="text-[10px] uppercase tracking-wider text-brand-ink/55 font-semibold">Pending / In Progress</div>
+        <div id="sumActive" class="font-display text-2xl sm:text-3xl mt-1">—</div>
+      </div>
+      <div class="rounded-2xl bg-white ring-1 ring-brand-ink/10 p-4 sm:p-5">
+        <div class="text-[10px] uppercase tracking-wider text-brand-ink/55 font-semibold">Financial Impact</div>
+        <div id="sumSaved" class="text-sm mt-1 leading-relaxed text-brand-ink/80">—</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div id="filterBar" class="hidden mb-6 rounded-2xl bg-white ring-1 ring-brand-ink/10 p-4 sm:p-5">
+      <div class="flex flex-wrap items-end gap-3">
+        <div>
+          <label for="filterStatus" class="block text-[11px] uppercase tracking-wider font-semibold text-brand-ink/55 mb-1">Status</label>
+          <select id="filterStatus" class="rounded-lg ring-1 ring-brand-ink/15 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-brand-red focus:outline-none">
+            <option value="">All</option>
+            <option value="Completed">Completed</option>
+            <option value="Unresponsive">Unresponsive</option>
+            <option value="Out of Scope">Out of Scope</option>
+            <option value="Open">Open</option>
+          </select>
+        </div>
+        <div>
+          <label for="filterType" class="block text-[11px] uppercase tracking-wider font-semibold text-brand-ink/55 mb-1">Type</label>
+          <select id="filterType" class="rounded-lg ring-1 ring-brand-ink/15 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-brand-red focus:outline-none">
+            <option value="">All</option>
+            <option value="OPD">OPD</option>
+            <option value="Secondary">Secondary</option>
+            <option value="Tertiary">Tertiary</option>
+            <option value="Primary">Primary</option>
+          </select>
+        </div>
+        <div>
+          <label for="filterBPL" class="block text-[11px] uppercase tracking-wider font-semibold text-brand-ink/55 mb-1">BPL Status</label>
+          <select id="filterBPL" class="rounded-lg ring-1 ring-brand-ink/15 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-brand-red focus:outline-none">
+            <option value="">All</option>
+            <option value="Active">Active</option>
+            <option value="Aadhar">Aadhar</option>
+            <option value="BPL">BPL</option>
+          </select>
+        </div>
+        <div class="flex-1 min-w-[200px]">
+          <label for="filterSearch" class="block text-[11px] uppercase tracking-wider font-semibold text-brand-ink/55 mb-1">Search</label>
+          <input id="filterSearch" type="search" placeholder="Patient Name, Chief Complaint, Case ID, Referral…" class="w-full rounded-lg ring-1 ring-brand-ink/15 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-red focus:outline-none" />
+        </div>
+        <button id="clearFiltersBtn" type="button" class="btn-secondary text-sm">Clear filters</button>
+      </div>
+    </div>
+
+    <div id="loading" class="rounded-2xl bg-brand-cream p-8 text-center text-brand-ink/60">Loading medical cases…</div>
+    <div id="error" class="hidden rounded-2xl bg-brand-red/10 text-brand-red p-6 text-sm font-semibold"></div>
+
+    <div id="tableWrap" class="hidden rounded-2xl bg-white ring-1 ring-brand-ink/10 shadow-card overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-brand-ink text-white text-left">
+            <tr>
+              <th class="px-3 py-3 font-semibold">Case #</th>
+              <th class="px-3 py-3 font-semibold">Date</th>
+              <th class="px-3 py-3 font-semibold">Patient Name</th>
+              <th class="px-3 py-3 font-semibold">Age/Gender</th>
+              <th class="px-3 py-3 font-semibold">Chief Complaint</th>
+              <th class="px-3 py-3 font-semibold">Status</th>
+              <th class="px-3 py-3 font-semibold">Type</th>
+              <th class="px-3 py-3 font-semibold">Referred To</th>
+              <th class="px-3 py-3 font-semibold">Actual Saved</th>
+              <th class="px-3 py-3 font-semibold text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody id="tbody" class="divide-y divide-brand-ink/5"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Edit Case Modal -->
+  <div id="caseModal" class="hidden fixed inset-0 bg-brand-ink/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-card-lg ring-1 ring-brand-ink/10">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="font-display text-xl sm:text-2xl" id="modalTitle">Update Case</h3>
+        <button id="closeModalBtn" class="text-brand-ink/65 hover:text-brand-ink font-bold text-xl">✕</button>
+      </div>
+      <form id="editForm" class="space-y-4">
+        <input type="hidden" id="modalCaseNumber" />
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-brand-ink/55 mb-1.5 uppercase tracking-wider">Status</label>
+            <select id="modalStatus" class="w-full rounded-lg ring-1 ring-brand-ink/15 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-red">
+              <option value="Open">Open</option>
+              <option value="Completed">Completed</option>
+              <option value="Unresponsive">Unresponsive</option>
+              <option value="Out of Scope">Out of Scope</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-brand-ink/55 mb-1.5 uppercase tracking-wider">Case Type</label>
+            <select id="modalType" class="w-full rounded-lg ring-1 ring-brand-ink/15 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-red">
+              <option value="OPD">OPD</option>
+              <option value="Primary">Primary</option>
+              <option value="Secondary">Secondary</option>
+              <option value="Tertiary">Tertiary</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-brand-ink/55 mb-1.5 uppercase tracking-wider">Actual Spend (₹)</label>
+            <input type="number" id="modalSpend" class="w-full rounded-lg ring-1 ring-brand-ink/15 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-red" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-brand-ink/55 mb-1.5 uppercase tracking-wider">Actual Saved (₹)</label>
+            <input type="number" id="modalSaved" class="w-full rounded-lg ring-1 ring-brand-ink/15 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-red" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-brand-ink/55 mb-1.5 uppercase tracking-wider">Follow up 1</label>
+          <input type="text" id="modalFollowUp1" class="w-full rounded-lg ring-1 ring-brand-ink/15 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-red" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-brand-ink/55 mb-1.5 uppercase tracking-wider">Follow up 2</label>
+          <input type="text" id="modalFollowUp2" class="w-full rounded-lg ring-1 ring-brand-ink/15 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-red" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-brand-ink/55 mb-1.5 uppercase tracking-wider">Follow up 3</label>
+          <input type="text" id="modalFollowUp3" class="w-full rounded-lg ring-1 ring-brand-ink/15 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-red" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-brand-ink/55 mb-1.5 uppercase tracking-wider">Additional Comments</label>
+          <textarea id="modalComments" rows="3" class="w-full rounded-lg ring-1 ring-brand-ink/15 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-red"></textarea>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-4">
+          <button type="button" id="cancelModalBtn" class="btn-secondary text-sm">Cancel</button>
+          <button type="submit" class="btn-primary text-sm bg-brand-red hover:bg-brand-red-deep">Save Updates</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id: string) => document.getElementById(id)!;
+    const fmtINR = (n: number) => `₹ ${n.toLocaleString("en-IN")}`;
+    const fmtDate = (iso: string) => {
+      try {
+        return new Date(iso).toLocaleDateString("en-IN", {
+          day: "2-digit", month: "short", year: "numeric",
+          timeZone: "Asia/Kolkata",
+        });
+      } catch { return iso; }
+    };
+
+    let allCases: any[] = [];
+    let activeFilters = { status: "", type: "", bpl: "", q: "" };
+
+    const statusColors: Record<string, string> = {
+      Completed: "bg-green-100 text-green-800",
+      Unresponsive: "bg-gray-100 text-gray-800",
+      "Out of Scope": "bg-brand-red/10 text-brand-red",
+      Open: "bg-brand-yellow text-brand-ink",
+    };
+
+    function applyFilters() {
+      let filtered = allCases;
+      if (activeFilters.status) {
+        filtered = filtered.filter(c => c.status === activeFilters.status);
+      }
+      if (activeFilters.type) {
+        filtered = filtered.filter(c => c.caseType === activeFilters.type);
+      }
+      if (activeFilters.bpl) {
+        filtered = filtered.filter(c => c.bplStatus === activeFilters.bpl);
+      }
+      if (activeFilters.q.trim()) {
+        const query = activeFilters.q.trim().toLowerCase();
+        filtered = filtered.filter(c => 
+          (c.patientName || "").toLowerCase().includes(query) ||
+          (c.caseNumber || "").toLowerCase().includes(query) ||
+          (c.chiefComplaint || "").toLowerCase().includes(query) ||
+          (c.referralName || "").toLowerCase().includes(query)
+        );
+      }
+      renderFiltered(filtered);
+    }
+
+    function renderFiltered(filtered: any[]) {
+      $("caseTotals").textContent = `${filtered.length} of ${allCases.length} cases`;
+      
+      const totalCount = filtered.length;
+      const completed = filtered.filter(c => c.status === 'Completed').length;
+      const active = filtered.filter(c => c.status === 'Open' || !c.status).length;
+      const savedAmount = filtered.reduce((acc, curr) => acc + (curr.actualSaved || 0), 0);
+
+      $("sumTotal").textContent = String(totalCount);
+      $("sumCompleted").textContent = String(completed);
+      $("sumActive").textContent = String(active);
+      $("sumSaved").innerHTML = `Total Saved: <strong>${fmtINR(savedAmount)}</strong>`;
+      
+      $("summaryCards").classList.remove("hidden");
+      $("filterBar").classList.remove("hidden");
+      
+      const tbody = $("tbody");
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" class="px-3 py-8 text-center text-brand-ink/55">No cases found matching the criteria.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(c => `
+        <tr class="hover:bg-brand-cream/40">
+          <td class="px-3 py-3.5 font-mono text-xs font-semibold">${c.caseNumber}</td>
+          <td class="px-3 py-3.5 whitespace-nowrap text-brand-ink/70">${fmtDate(c.createdAt)}</td>
+          <td class="px-3 py-3.5 font-semibold text-brand-ink">${c.patientName}</td>
+          <td class="px-3 py-3.5 text-brand-ink/80">${c.age || '—'} / ${c.gender || '—'}</td>
+          <td class="px-3 py-3.5 max-w-[200px] truncate" title="${c.chiefComplaint}">${c.chiefComplaint}</td>
+          <td class="px-3 py-3.5">
+            <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${statusColors[c.status || "Open"] || "bg-gray-100"}">
+              ${c.status || "Open"}
+            </span>
+          </td>
+          <td class="px-3 py-3.5 font-semibold text-xs text-brand-ink/75">${c.caseType || "OPD"}</td>
+          <td class="px-3 py-3.5 text-brand-ink/70">${c.referred || "—"}</td>
+          <td class="px-3 py-3.5 font-display text-brand-ink/80 text-right">${c.actualSaved ? fmtINR(c.actualSaved) : "—"}</td>
+          <td class="px-3 py-3.5 text-center">
+            <button class="edit-btn text-brand-red font-semibold hover:underline text-xs" data-case="${c.caseNumber}">Edit</button>
+          </td>
+        </tr>
+      `).join("");
+
+      document.querySelectorAll(".edit-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          const caseNo = (e.target as HTMLButtonElement).dataset.case;
+          openModal(caseNo!);
+        });
+      });
+    }
+
+    function openModal(caseNo: string) {
+      const c = allCases.find(item => item.caseNumber === caseNo);
+      if (!c) return;
+
+      $("modalTitle").textContent = `Update Case — ${caseNo}`;
+      $("modalCaseNumber").value = caseNo;
+      $("modalStatus").value = c.status || "Open";
+      $("modalType").value = c.caseType || "OPD";
+      $("modalSpend").value = c.actualSpend || "";
+      $("modalSaved").value = c.actualSaved || "";
+      $("modalFollowUp1").value = c.followUp1 || "";
+      $("modalFollowUp2").value = c.followUp2 || "";
+      $("modalFollowUp3").value = c.followUp3 || "";
+      $("modalComments").value = c.additionalComments || "";
+
+      $("caseModal").classList.remove("hidden");
+    }
+
+    function closeModal() {
+      $("caseModal").classList.add("hidden");
+      $("editForm").reset();
+    }
+
+    async function fetchCases() {
+      $("loading").classList.remove("hidden");
+      $("tableWrap").classList.add("hidden");
+      $("error").classList.add("hidden");
+
+      try {
+        const res = await fetch("/api/admin/cases");
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || "Failed to fetch");
+
+        allCases = data.cases || [];
+        $("loading").classList.add("hidden");
+        $("tableWrap").classList.remove("hidden");
+        applyFilters();
+      } catch (err) {
+        $("loading").classList.add("hidden");
+        const e = $("error");
+        e.textContent = `Error: ${err instanceof Error ? err.message : "Failed to load"}`;
+        e.classList.remove("hidden");
+      }
+    }
+
+    $("refreshCasesBtn").addEventListener("click", fetchCases);
+    $("closeModalBtn").addEventListener("click", closeModal);
+    $("cancelModalBtn").addEventListener("click", closeModal);
+
+    $("filterStatus").addEventListener("change", (e) => {
+      activeFilters.status = (e.target as HTMLSelectElement).value;
+      applyFilters();
+    });
+
+    $("filterType").addEventListener("change", (e) => {
+      activeFilters.type = (e.target as HTMLSelectElement).value;
+      applyFilters();
+    });
+
+    $("filterBPL").addEventListener("change", (e) => {
+      activeFilters.bpl = (e.target as HTMLSelectElement).value;
+      applyFilters();
+    });
+
+    let debounceTimer: any;
+    $("filterSearch").addEventListener("input", (e) => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        activeFilters.q = (e.target as HTMLInputElement).value;
+        applyFilters();
+      }, 200);
+    });
+
+    $("clearFiltersBtn").addEventListener("click", () => {
+      $("filterStatus").value = "";
+      $("filterType").value = "";
+      $("filterBPL").value = "";
+      $("filterSearch").value = "";
+      activeFilters = { status: "", type: "", bpl: "", q: "" };
+      applyFilters();
+    });
+
+    $("editForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const payload = {
+        caseNumber: $("modalCaseNumber").value,
+        status: $("modalStatus").value,
+        caseType: $("modalType").value,
+        actualSpend: $("modalSpend").value ? Number($("modalSpend").value) : null,
+        actualSaved: $("modalSaved").value ? Number($("modalSaved").value) : null,
+        followUp1: $("modalFollowUp1").value,
+        followUp2: $("modalFollowUp2").value,
+        followUp3: $("modalFollowUp3").value,
+        additionalComments: $("modalComments").value
+      };
+
+      try {
+        const res = await fetch("/api/admin/update-case", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || "Update failed");
+
+        closeModal();
+        fetchCases();
+      } catch (err) {
+        alert(err instanceof Error ? err.message : "Failed to update case");
+      }
+    });
+
+    fetchCases();
+  </script>
+</BaseLayout>
